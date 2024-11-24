@@ -1,8 +1,192 @@
-x <- c(151, 174, 138, 186, 128, 136, 179, 163, 152, 131)
-y <- c(63, 81, 56, 91, 47, 57, 76, 72, 62, 48)
-relation <- lm(y~x)
-summary(relation)
-plot(x,y,col="blue",main = "Income and happiness  regression",
-     abline(relation),xlab = "INCOME",ylab = "HAPPINESS",cex=1.3,pch=16)
+# linear regression
+#Linear Regression
+data(cars)
+View(head(cars))
+scatter.smooth(x = cars$speed, y = cars$dist, main = "Dist~Speed")
+#________________________________________________________________________________
 
---------x---------
+#assignment problem
+
+library(lpSolve)
+library(RcppHungarian)
+
+num=readline("Enter no. of rows ")
+rows=as.numeric(num)
+cat("enter values row wise")
+a=scan(nmax= rows^2)
+cost.mat=matrix(a,nrow=rows,byrow = TRUE)
+cost.mat
+print("For Minimization type 1 ")
+print("For Maximization type 2 ")
+prob=readline()
+prob
+if (prob == "1"){
+  ans=HungarianSolver(cost.mat)
+  print("Assignment")
+  print(ans$pairs)
+  print("Cost")
+  print(ans$cost)
+}else if (prob == "2"){
+  ans=lp.assign(cost.mat,direction = "max")
+  print("Assignment")
+  print(ans$solution)
+  print("Cost")
+  print(ans$objval)
+}else{
+  cat("Choose a valid option")
+  break
+}
+
+
+#_________________________________________________
+
+
+A = structure(list(Time = c(0, 1, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 24,
+                            25, 26, 27, 28, 29, 30), Counts = c(126.6, 101.8, 71.6, 101.6, 68.1, 62.9, 45.5, 41.9, 46.3,
+                                                                34.1, 38.2, 41.7, 24.7, 41.5, 36.6, 19.6, 22.8, 29.6, 23.5, 15.3, 13.4, 26.8, 9.8, 18.8, 25.9,
+                                                                19.3)),.Names = c("Time", "Counts"),row.names = c(1L, 2L, 3L, 5L, 7L, 9L, 10L, 11L, 12L,
+                                                                                                                  13L, 14L, 15L, 16L, 17L, 19L, 20L, 21L, 22L, 23L, 25L, 26L, 27L, 28L, 29L, 30L, 31L),class =
+                "data.frame")
+attach(A)
+names(A)
+linear.model = lm(Counts ~ Time)
+summary(linear.model)
+#Straight Line Fitting: y=a+bX
+plot(Time, Counts, pch=16, ylab = "Counts ", cex.lab = 1.3, col = "red" )
+
+abline(lm(Counts ~ Time), col = "blue")
+
+#Curve Fitting: y=aX*2+bXtc
+Time2 <- Time^2
+quadratic.model <-lm(Counts ~ Time + Time2)
+timevalues <- seq(0, 30, 0.1)
+predictedcounts <- predict(quadratic.model,list(Time=timevalues, Time2=timevalues^2))
+plot(Time, Counts, pch=16, xlab = "Time (s)", ylab = "Counts", cex.lab = 1.3, col = "blue")
+lines(timevalues, predictedcounts, col = "darkgreen", lwd = 3)
+
+
+
+#____________________________________________________________
+
+packages <- c("dplyr", "e1071", "caTools", "caret")
+install.packages(packages)
+
+library(dplyr)
+library(e1071)
+library(caTools)
+library(caret)
+data(Titanic)
+str(Titanic)
+Titanic=as.data.frame(Titanic)
+head(Titanic)
+#REMOVE FREQUENCY COLUMN
+Titanic=subset(Titanic,select=c("Class","Sex","Age","Survived"))
+Titanic
+#Naive Bayes Model
+nbc=naiveBayes(Survived~. ,data=Titanic)
+nbc
+split=sample.split(Titanic$Class,SplitRatio = 0.7)
+split
+train=subset(Titanic,split==T)
+test=subset(Titanic, split==F)
+train
+pred=predict(nbc,newdata = test)
+pred
+cm=table(test$Survived,pred)
+cm
+confusionMatrix(cm)
+ac_Test = sum(diag(cm)) / sum(cm)
+print(paste('Accuracy for test is found to be', ac_Test*100))      
+      
+
+#___________________________________________________________________________________
+#LPP
+#Linear Programming Problem
+library(lpSolve)
+#Max z=3x1+2x2 Subject to x1+x2<=4,x1-x2<=2
+objf=c(3,2)
+constraints=matrix(c(1,1,1,-1),nrow=2,byrow = T)
+constsigns=c("<=","<=")
+constvals=c(4,2)
+z=lp("max",objf,constraints,constsigns,constvals)
+z=z$solution
+print(paste('Value of x1 is',z[1]))
+print(paste('Value of x2 is',z[2]))
+#Min z=x2-3x3 subject to x1+3x2-x3<=7,-2x2+4x3<=12,-4x24+3x3<=10
+objfn=c(0,1,-3)
+const1=matrix(c(1,3,-1,0,-2,4,0,-4,3),nrow=3,byrow=T)
+const1signs=c("<=", "<=", "<=" )
+constvals1=c(7, 12,10)
+z1=lp("min",objfn,const1,const1signs,constvals1)
+z1=z1$solution
+print(paste('Value of x1 is',z1[1]))
+print(paste('Value of x2 is',z1[2]))
+print(paste('Value of x3 is',z1[3]))
+
+#__________________________________________________
+#AsSIGNMENT PROBLEM
+library(lpSolve)
+#Square Matrix 4x4
+costmat=matrix(c(2, 5, 7, 1, 7, 7, 3, 8, 5, 7, 8, 10, 2, 9, 8, 2), 4,4)
+costmat
+lp.assign(costmat)
+lp.assign(costmat)$solution
+#3x2 Matrix
+costmat2=matrix(c(7,9,9,2,1,3),3,2)
+costmat2
+lp.assign(costmat2)
+lp.assign(costmat2)$solution
+library(RcppHungarian)
+HungarianSolver(costmat2)
+A=c(160, 130,175, 190,200)
+B=c( 135,120,130, 160,175)
+C=c( 140,110, 155,170, 185)
+D=c(50,50,80,80, 110)
+E=c(55,35, 70,80, 105)
+time.mat=rbind(A,B,C,D,E)
+time.mat
+assign=lp.assign(time.mat,direction = "min")
+assign
+HungarianSolver(time.mat)
+
+#______________________________________________________
+#transportation problem
+#Transportation Problem
+library(TransP)
+#Input matrix where last row is the Demand and last column is the Supply
+ex_matrix=data.frame(M1=c(15,10,25, 17,210) ,M2=c(25,19,17,24,240),
+                     M3=c(8,18,15,19,110) ,M4=c(13,50,14, 13,80) ,
+                     M5=c(20, 12,18, 19,170),
+                     Suply=c(430,150, 100,130,810),
+                     row.names = c("W1","W2","W3","W4","Demand"))
+ex_matrix
+#Least Cost or Minimum Cost
+c1=mincost(as.matrix(ex_matrix))
+c1
+#NWCR Method
+nwc(ex_matrix)
+
+#________________________________________________________________
+#CRITICAL PATH
+install.packages("devtools")
+devtools::install_github("bgreenawald/projmanr")
+library(projmanr)
+#simple Data for critical_path function
+taskdata1
+critical_path(taskdata1,gantt=F,network = T)
+id=c(1,2,3,4,5,6)
+name=c("A","B","C","D","E","F")
+duration=c(3,4,4,2,1,4)
+pred=c("","1","1,2","1,3","2,3,4","3,5")
+df=data.frame(id,name,duration,pred)
+df
+critical_path(df,network=T)
+
+
+
+
+
+
+
+
+
