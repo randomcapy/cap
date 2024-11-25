@@ -1,0 +1,81 @@
+PRAC 1 VERTICAL FRAGMENTATION
+
+DataBase Link :
+Create this link to connect bomb1 to bomb3 server
+SQL> Create database link link4bomb3 connect to scott identified by tiger using bomb3; 
+Database link created.
+
+Create this link to connect bomb3 to bomb1 server
+SQL> Create database link link4bomb1 connect to scott identified by tiger using bomb3;
+Database link created.
+
+SQL> create table emp1
+  2  (
+  3  eno number(5),
+  4  ename varchar2(10),
+  5  address varchar2(10)
+  6  )
+  7  /
+
+Table created.
+
+Create table emp2 in bomb3
+
+=======
+SQL> connect scott/tiger@bomb3
+Connected
+
+SQL> create table emp2
+  2  (
+  3  eno number(5),
+  4  email varchar2(15),
+  5  salary number(10)
+  6* )
+SQL> /
+
+Table created.
+
+SQL> connect scott/tiger@bomb1
+Connected
+
+SQL> desc emp1
+ Name               Null?       Type
+ ----------------- -------- -----------------
+ ENO                              NUMBER(5)
+ ENAME                        VARCHAR2(10)
+ ADDRESS                    VARCHAR2(10)
+
+
+SQL> desc emp2@link4bomb3
+
+ Name                Null?      Type
+ ----------------- -------- ----------------
+ ENO                             NUMBER(5)
+ EMAIL                         VARCHAR2(15)
+ SALARY                      NUMBER(10)
+Inserting records into the emp1 table:
+
+SQL> insert into emp1 values(1,'Ekta','Andheri');
+1 row created.
+
+SQL> insert into emp1 values(2,'Sharmila','Borivali');
+1 row created.
+(X10)
+
+Inserting records into the emp2 table:
+
+SQL> insert into emp2 values(1,'eks@yahoo.com',20000);
+1 row created.
+
+SQL> insert into emp2 values(2,'sam@hotmail.com',20000);
+1 row created.
+
+SQL> insert into emp2 values(3,'ani@rediff.com',15000);
+1 row created.
+(X2)
+
+
+Output :
+
+SQL> select * from emp2@link4bomb3;
+
