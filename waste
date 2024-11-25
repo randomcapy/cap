@@ -1,11 +1,22 @@
 # linear regression
-#Linear Regression
 data(cars)
 View(head(cars))
 scatter.smooth(x = cars$speed, y = cars$dist, main = "Dist~Speed")
+par(mfrow = c(1, 2))
+boxplot(cars$speed, main = "Speed", sub = paste(
+  "Outlier rows:",
+  boxplot.stats(cars$speed)$out
+))
+boxplot(cars$dist, main = "Distance", sub = paste(
+  "Outlier rows:",
+  boxplot.stats(cars$dist)$out
+))
+linear_model = lm(formula = dist ~ speed, data = cars)
+linear_model
+
 #________________________________________________________________________________
 
-#assignment problem
+#assignment problem PRAC 2
 
 library(lpSolve)
 library(RcppHungarian)
@@ -37,9 +48,19 @@ if (prob == "1"){
   break
 }
 
+#___________________________________________
+2. Regression and prediction
+CODE:
+x =c(151, 174, 138, 186, 128, 136, 179, 163, 152, 131)
+y = c(63, 81, 56, 91, 47, 57, 76, 72, 62, 48)
+relation <- lm(y~x)
+a = data.frame(x = 170)
+result= predict(relation,a)  #predict(model,new_data)
+print(result)
+
 
 #_________________________________________________
-
+#LEAST SQUARE METHOD 
 
 A = structure(list(Time = c(0, 1, 2, 4, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 24,
                             25, 26, 27, 28, 29, 30), Counts = c(126.6, 101.8, 71.6, 101.6, 68.1, 62.9, 45.5, 41.9, 46.3,
@@ -67,7 +88,7 @@ lines(timevalues, predictedcounts, col = "darkgreen", lwd = 3)
 
 
 #____________________________________________________________
-
+#NAIVE BAYES CLASSIFIER
 packages <- c("dplyr", "e1071", "caTools", "caret")
 install.packages(packages)
 
