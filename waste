@@ -1,0 +1,5438 @@
+connect system/sies123 as sysdba;
+create user scott  identified by tiger account unlock;
+grant all privileges to scott;
+connect scott/tiger;
+
+Practical-1
+
+first we have create two database namely bomb1 and bomb3 in oracle_home/database configuration assistant
+after database created untick scott
+
+#at both cmd
+connect system/tiger;
+grant all privileges to scott;
+
+
+#sqlpus1
+connect scott/tiger@bomb1;
+CREATE TABLE TESTALOK (ROLLNO NUMBER(10), SFEE NUMBER(5));
+INSERT INTO TESTALOK VALUES (100, 1500);
+INSERT INTO TESTALOK VALUES (101, 9200);
+INSERT INTO TESTALOK VALUES (102, 2000);
+SELECT * FROM TESTALOK;
+CREATE DATABASE LINK TOORCL CONNECT TO scott identified by tiger using 'bomb1';
+select a.rollno, a.sfee, b.rollno, b.sname  from TESTALOK a, TESTORCL@TOVINAY b
+where a.rollno = b.rollno;
+
+
+
+#sqlplus2
+connect scott/tiger@bomb3;
+CREATE TABLE TESTORCL (ROLLNO NUMBER(10), SNAME VARCHAR2(10));
+INSERT INTO TESTORCL VALUES (100, 'PINTOO');
+INSERT INTO TESTORCL VALUES (101, 'PINTAA');
+INSERT INTO TESTORCL VALUES (102, 'INTOO');
+SELECT * FROM TESTORCL;
+CREATE DATABASE LINK TOVINAY CONNECT TO scott identified by tiger using 'bomb3';
+
+Pract1-A
+Title: Distributed Databases - Vertical Fragmentation
+
+Question: Create a global conceptual schema Emp ( Eno, Ename, Address, Email, Salary) and insert 10 records. Divide Emp into vertical fragments 
+Emp1 ( Eno, Ename, Address) and Emp2 ( Eno, Email, Salary) on two different nodes. Fire the following queries:
+(i)	Find the salary of an Employee where employee number is known.
+(ii)	Find the Email where the employee name is known.
+(iii)	Find the employee name and Email where employee number is known.
+(iv)	Find the employee name whose salary is > 10000
+
+DataBase Link :
+Create this link to connect bomb1 to bomb3 server
+SQL> Create database link link4bomb3 connect to scott identified by tiger using bomb3; 
+Database link created.
+
+Create this link to connect bomb3 to bomb1 server
+SQL> Create database link link4bomb1 connect to scott identified by tiger using bomb3;
+Database link created.
+
+
+Vertical Fragmentation(Description) :
+	Each site may not need all the attributes of a relation, which would indicate the need for a different type of fragmentation. Vertical fragmentation divides a relation “vertically” by columns. A vertical fragment relation keeps only certain attributes of the relation.
+
+Setup:
+ 
+
+
+
+
+
+Table Structure :
+Create table emp1 in bomb1
+
+SQL> create table emp1
+  2  (
+  3  eno number(5),
+  4  ename varchar2(10),
+  5  address varchar2(10)
+  6  )
+  7  /
+
+Table created.
+
+Create table emp2 in bomb3
+SQL> connect scott/tiger@bomb3
+Connected
+
+SQL> create table emp2
+  2  (
+  3  eno number(5),
+  4  email varchar2(15),
+  5  salary number(10)
+  6* )
+SQL> /
+
+Table created.
+
+SQL> connect scott/tiger@bomb1
+Connected
+
+SQL> desc emp1
+ Name               Null?       Type
+ ----------------- -------- -----------------
+ ENO                              NUMBER(5)
+ ENAME                        VARCHAR2(10)
+ ADDRESS                    VARCHAR2(10)
+
+
+SQL> desc emp2@link4bomb3
+
+ Name                Null?      Type
+ ----------------- -------- ----------------
+ ENO                             NUMBER(5)
+ EMAIL                         VARCHAR2(15)
+ SALARY                      NUMBER(10)
+Inserting records into the emp1 table:
+
+SQL> insert into emp1 values(1,'Ekta','Andheri');
+1 row created.
+
+SQL> insert into emp1 values(2,'Sharmila','Borivali');
+1 row created.
+
+SQL>  insert into emp1 values(3,'Anita','Goregaon');
+1 row created.
+
+SQL>  insert into emp1 values(4,'Sweta','Dahisar');
+1 row created.
+
+SQL>  insert into emp1 values(5,'Falguni','Parle');
+1 row created.
+
+SQL>  insert into emp1 values(6,'Nancy','Bandra');
+1 row created.
+
+SQL>  insert into emp1 values(7,'Pathik','Kandivali');
+1 row created.
+
+SQL>  insert into emp1 values(8,'Sandeep','M.Central');
+1 row created.
+
+SQL>  insert into emp1 values(9,'Gautam','Churchgate');
+1 row created.
+
+SQL>  insert into emp1 values(10,'Akshay','Santacruz');
+1 row created.
+
+Output :
+
+SQL> select * from emp1;
+
+      Eno      Ename         Address
+   ---------- ----------     -------------------
+         1       Ekta             Andheri
+         2       Sharmila      Borivali
+         3       Anita            Goregaon
+         4       Sweta           Dahisar
+         5       Falguni         Parle
+         6       Nancy           Bandra
+         7       Pathik           Kandivali
+         8       Sandeep        M.Central
+         9       Gautam         Churchgate
+        10      Akshay          Santacruz
+10 rows selected.
+
+Inserting records into the emp2 table:
+
+SQL> insert into emp2 values(1,'eks@yahoo.com',20000);
+1 row created.
+
+SQL> insert into emp2 values(2,'sam@hotmail.com',20000);
+1 row created.
+
+SQL> insert into emp2 values(3,'ani@rediff.com',15000);
+1 row created.
+
+SQL> insert into emp2 values(4,'sweta@yahoo.com',10000);
+1 row created.
+
+SQL> insert into emp2 values(5,'falgu@hotmail',9900);
+1 row created.
+
+SQL> insert into emp2 values(6,'nancy@yahoo',7000);
+1 row created.
+
+SQL> insert into emp2 values(7,'pat@yahoo',22000);
+1 row created.
+
+SQL> insert into emp2 values(8,'sandy@hotmail',25000);
+1 row created.
+
+SQL> insert into emp2 values(9,'gatu@rediff',10500);
+1 row created.
+
+SQL> insert into emp2 values(10,'aks@gmail',1900);
+1 row created.
+
+Output :
+
+SQL> select * from emp2@link4bomb3;
+
+       Eno      Email                        Salary
+   ---------- ---------------        --------------------
+         1        eks@yahoo.com        20000
+         2        sam@hotmail.com     20000
+         3        ani@rediff.com          15000
+         4        sweta@yahoo.com     10000
+         5        falgu@hotmail            9900
+         6        nancy@yahoo             7000
+         7        pat@yahoo                  22000
+         8        sandy@hotmail           25000
+         9        gatu@rediff                 10500
+        10       aks@gmail                  1900
+
+10 rows selected.
+
+
+
+
+
+Queries:
+1. Find the salary of an Employee where employee number is known.
+
+SQL> select e1.eno,e2.salary
+   2  from emp1 e1,emp2@link4bomb3 e2
+   3  where e1.eno=1 and e1.eno = e2.eno;
+
+Output:
+
+       Eno       Salary
+   ---------- ---------------
+        1             20000
+
+2. Find the Email where the employee name is known.
+
+SQL> select e1.ename,e2.email
+   2  from emp1 e1,emp2@link4bomb3 e2
+   3  where e1.ename=’Ekta’ and e1.eno=e2.eno;
+
+Output:
+
+Ename      Email
+---------- ---------------------
+Ekta          eks@yahoo.com   
+
+3.	Find the employee name and Email where employee number is known.
+
+SQL> select e1.ename,e2.email
+        2  from emp1 e1,emp2@link4bomb3 e2
+        3  where e1.eno=1 and e1.eno=e2.eno;
+
+Output:
+
+Ename      Email
+---------- --------------------
+Ekta        eks@yahoo.com   
+
+
+ 4.Find the employee name whose salary is > 10000
+
+SQL> select e1.eno,e1.ename,e1.address,e2.email,e2.salary
+  2  from emp1 e1, emp2@ link4bomb3
+  3 where e1.eno = e2.eno and e2.salary > 10000;
+
+
+
+
+
+
+
+Output:
+
+ Eno    Ename          Address           Email                     Salary
+ ----- --------------- ----------------- -------------------  ----------------
+1        Ekta            Andheri           eks@yahoo.com       20000         
+2        Sharmila     Borivali           sam@hotmail.com   20000
+   3        Anita           Goregaon        ani@rediff.com        15000  
+7        Pathik          Kandivali        pat@yahoo               22000         
+8        Sandeep       M.Central       sandy@hotmail        25000
+   9        Gautam       Churchgate     gatu@rediff               10500                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract1-B
+Title: Distributed Databases - Vertical Fragmentation
+
+Question: Create a global conceptual schema product_log(product_id, product_name, product_desc, cost, profit) and insert 10 records.
+Divide product_log into vertical fragments 
+product_m4(product_id, product_name, product_desc) and product_m4(product_id, cost, profit) on two different nodes.
+Fire the following queries:
+(i)	Display cost and profit of each product
+(ii)	Display product name where profit is less than Rs.20
+(iii)	Display product name, details where cost is between 200 to 500
+(iv)	Display product name beginning with ‘LA’ and profit is 10% of product cost
+
+DataBase Link :
+Create this link to connect bomb1 to bomb2 server
+SQL> Create database link link4bomb2 connect to scott identified by tiger using bomb3; 
+Database link created.
+
+Create this link to connect bomb2 to bomb1 server
+SQL> Create database link link4bomb1 connect to scott identified by tiger using bomb3; 
+Database link created.
+
+Create this link to connect bomb2 to bomb3 server
+SQL> Create database link link4bomb3 connect to scott identified by tiger using bomb3; 
+Database link created.
+
+Create this link to connect bomb3 to bomb2 server
+SQL> Create database link link4bomb2 connect to scott identified by tiger using bomb3; 
+Database link created.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Setup:
+ 
+
+
+
+
+
+
+
+
+
+
+
+Table Structure:
+
+Creating tables:
+
+Create table product_se15 in bomb1 server
+SQL> create table product_se15
+  2  (
+  3  pro_id varchar2(5),
+  4  pro_name varchar2(20),
+  5  pro_desc varchar2(50),
+  6  pro_cost number(10),
+  7  pro_profit number(10)
+  8  )
+  9  /
+
+Table created.
+
+
+
+Create table product1_se15 in bomb2 server
+
+SQL> connect scott/tiger@bomb2;
+Connected.
+
+SQL>  create table product1_se15
+  2  (
+  3  pro_id varchar2(5),
+  4  pro_name varchar2(20),
+  5  pro_desc varchar2(50)
+  6* )
+SQL> /
+
+Table created.
+
+Create table product2_se15 in bomb3 server
+
+SQL> connect scott/tiger@bomb3;
+Connected.
+
+ SQL> create table product2_se15
+  2  (
+  3  pro_id varchar2(5),
+  4  pro_cost number(10),
+  5  pro_profit number(10)
+  6* )
+SQL> /
+
+Table created.
+
+
+
+Creating trigger:
+
+SQL> create or replace trigger prod_se15
+  2  after insert on product_se15@link4bomb1
+  3  for each row
+  4  begin
+  5  insert into product1_se15@link4bomb2 values(:new.pro_id,:new.pro_name,:new.pro_desc);
+  6  insert into product2_se15@link4bomb3 values(:new.pro_id,:new.pro_cost,:new.pro_profit);
+  7* end;
+  8  /
+
+Trigger created.
+
+Inserting records into the table product_se15 :
+
+SQL> insert into product_se15 values('p1','lakme','face wash',50,20);
+1 row created.
+
+SQL>  insert into product_se15 values('p2','garnier','conditioner',100,30);
+1 row created.
+
+SQL> insert into product_se15 values('p3','ravlon','shampoo',200,60);
+1 row created.
+
+SQL>  insert into product_se15 values('p4','intel','processor',8000,1000);
+1 row created.
+
+SQL>  insert into product_se15 values('p5','intel','mouse',500,50);
+1 row created.
+
+SQL>  insert into product_se15 values('p6','lakme','foundation',200,30);
+1 row created.
+
+SQL>  insert into product_se15 values('p7','livon','conditioner',100,20);
+1 row created.
+
+SQL>  insert into product_se15 values('p8','aquaguard','water purifier',10000,1000);
+1 row created.
+
+SQL>  insert into product_se15 values('p9','nokia','handset 6600',9000,2000);
+1 row created.
+
+SQL>  insert into product_se15 values('p10','nokia','handset 6610',6000,1500);
+1 row created.
+
+
+
+
+
+
+Output :
+
+SQL>select * from product_se15;
+
+Pro_Id       Pro_Name              Pro_Desc        Pro_Cost           Pro_Profit
+---------- ----------------------  -----------------  -----------------  --------------------
+  p1             lakme                   face wash            50                     20
+  p2             garnier                 conditioner          100                   30
+  p3             ravlon                   shampoo             200                   60
+  p4             intel                      processor            8000                 1000
+  p5             intel                      mouse                 500                   50
+  p6             lakme                   foundation           200                   30
+  p7             livon                    conditioner          100                    20
+  p8             aquaguard           water purifier       10000                1000
+  p9             nokia                   handset 6600        9000                  2000
+  p10           nokia                   handset 6610        6000                  1500
+ 
+10 rows selected.
+Query1: Select the cost and profit for each product
+
+SQL> select a.pro_name,b.pro_cost,b.pro_profit from product1_se15 a,product2_se15@link4bomb3 b where a.pro_id=b.pro_id and b.pro_id=a.pro_id
+SQL> /
+
+Output: 
+
+Pro_Name            Pro_Cost          Pro_Profit
+-------------------- -----------------  --------------------
+lakme                       50                    20
+nokia                        6000                1500
+garnier                     100                   30
+ravlon                      200                   60
+intel                         8000                 1000
+intel                         500                   50
+lakme                      200                    30
+livon                        100                   20
+aquaguard                10000              1000
+nokia                        9000                2000
+
+10 rows selected.
+
+Query2: Display product name where profit is less than Rs.20
+
+SQL> select a.pro_name,b.pro_profit from product1_se15 a,product2_se15@link4bomb3 b where a.pro_id=b.pro_id and b.pro_id=a.pro_id and b.pro_profit<=30;
+
+Output:
+
+Pro_Name            Pro_Profit
+-------------------- ---------------------
+lakme                        	20
+garnier                      	30
+lakme                         	30
+livon                          	20
+
+
+Query3: Display product name and description where product cost is in between 200 and 500
+
+ SQL> select a.pro_name,a.pro_desc,b.pro_cost from product1_se15 a,product2_se15@link4bomb3 b where a.pro_id=b.pro_id and b.pro_id=a.pro_id and b.pro_cost>=200 and b.pro_cost<=500;
+
+
+
+
+
+Output:
+
+Pro_Name            Pro_Desc                  Pro_Cost
+------------------  ----------------------   ------------------------
+ ravlon                   shampoo                    200
+ intel                      mouse                        500
+ lakme                    foundation                200
+
+
+Query 4: Display product name beginning with ‘la’ and profit is 10% of the product cost
+
+SQL> select a.pro_name,b.pro_cost,b.pro_profit from product1_se15  2 a,product2_se15@link4bomb3 b where a.pro_id=b.pro_id and  3 a.pro_name like 'la%' and b.pro_profit>=0.1*b.pro_cost
+4 /
+
+Output:
+
+Pro_Name           Pro_Cost            Pro_Profit
+-----------------  ------------------  --------------------
+ lakme                       50                    20
+ lakme                       200                  30
+
+
+
+
+Query 5 : Display product name beginning with ‘la’ and profit is 20% of the product cost
+
+  SQL> select a.pro_name,b.pro_cost,b.pro_profit from product1_se15
+  2   a,product2_se15@link4bomb3 b where a.pro_id=b.pro_id and
+  3*  a.pro_name like 'la%' and b.pro_profit>=0.2*b.pro_cost
+SQL> /
+
+Output :
+
+Pro_Name            Pro_Cost      Pro_Profit
+-------------------- -------------  ----------------
+ lakme                        50              20
+
+
+
+
+
+
+
+
+
+
+Pract1-C
+Title: Distributed Databases - Vertical Fragmentation
+
+Question: Create a global conceptual schema supplier(suppid, suppname, suppaddr,  suppaddr(bno, bname, street, landmark), suppcontact, suppcat, supprank, suppmop).
+Perform vertical fragmentation and divide the above schema in 2 fragments, one schema will contain attributes: (suppid, suppname, suppaddr(bno, bname, street, landmark) and the other schema will contain attributes: suppid, suppcat, supprank, suppmop. The two fragments should be in different nodes. Insert 10 rows in both fragments.
+
+Database link creation:
+
+create database link linkcomp75 connect to hemant identified by hemant using 'tocomp75'
+
+Note: ‘tocomp75’ is the net service name created by using ‘net manager’ in ‘configuration and migration tools’
+
+Table creation: 
+
+Note: Following table created in one terminal.
+
+create table supplier
+(
+suppid     NUMBER,  
+suppcat     VARCHAR2(20),  
+supprank     VARCHAR2(20),  
+suppmop    VARCHAR2(20)  
+);
+
+Note: Following object and table created on other terminal.
+create type address_ty as object
+(
+ bno number,
+ bname varchar2(20),
+ street varchar2(20),
+ landmark varchar2(20)
+);
+
+create table supplier
+(
+ suppid number,
+ suppname varchar2(20),
+ suppaddr address_ty,
+ suppcontact number
+);
+
+
+
+Creation of rows:
+
+insert into supplier values(1,'MS suppliers',address_ty(1,'Arunodaya','manipada','kes school'),22345687);
+
+insert into supplier values(2,'Balaji suppliers',address_ty(10,'Shanti Niketan','lbs marg','ramdeo hotel'),3858174);
+
+insert into supplier values(3,'Krishna suppliers',address_ty(25,'Raj','lsk road','shopping point'),9235768213);
+
+insert into supplier values(4,'SupplierHQ',address_ty(9,'Shreeram','nehru road','mosque'),9821476214);
+
+insert into supplier values(5,'SK suppliers',address_ty(4,'point soceity','gandhi marg','bus stop'),256551426);
+
+insert into supplier values(6,'Best suppliers',address_ty(77,'AZ society','sanjay gandhi road','bus stop'),2145525);
+
+insert into supplier values(7,'RAW-M suppliers',address_ty(56,'Aaram society','mahatma marg','temple'),52847366);
+
+insert into supplier values(8,'OK suppliers',address_ty(88,'Hari society','sk marg','lhs'),992365471);
+
+insert into supplier values(9,'Nariman suppliers',address_ty(88,'New age soceity','ab marg','bus stop'),9827125202);
+
+insert into supplier values(10,'MAT-HQ',address_ty(99,'op marg','kk society','airport'),9871234544);
+
+insert into supplier values(11,'Nman suppliers',address_ty(89,'easy soceity','ab marg','bus stop'),982712);
+
+insert into supplier values(12,'MATERIALS',address_ty(89,'easy soceity','ab marg','bus stop'),982712);
+
+insert into supplier@linkcomp75 values(1,'finish','*','cash');
+
+insert into supplier@linkcomp75 values(2,'finish','**','cash');
+
+insert into supplier@linkcomp75 values(3,'semifinish','*','cheque');
+
+insert into supplier@linkcomp75 values(4,'semifinish','**','cheque');
+
+insert into supplier@linkcomp75 values(5,'finish','*','cash');
+
+insert into supplier@linkcomp75 values(6,'semifinish','**','cheque');
+
+insert into supplier@linkcomp75 values(7,'finish','*','cash');
+
+insert into supplier@linkcomp75 values(8,'semifinish','**','cash');
+
+insert into supplier@linkcomp75 values(9,'finish','*','cheque');
+
+insert into supplier@linkcomp75 values(10,'finish','**','cheque');
+
+Firing Queries:
+
+Query 1: Display all suppliers supplying finished product.
+
+SQL>  select a.suppname as "Supplier",b.suppcat as "Category" from supplier a,
+supplier@linkcomp75 b where a.suppid = b.suppid and b.suppcat = 'finish'
+
+Output:
+
+Supplier                   Category  
+-------------------------------
+MS suppliers           finish  
+Balaji suppliers       finish  
+SK suppliers           finish  
+RAW-M suppliers  finish  
+Nariman suppliers  finish  
+MAT-HQ                finish  
+
+Query 2: Display all 2 star supplier’s details.
+
+SQL>  select a.suppname,b.supprank from supplier a, supplier@linkcomp75 b 
+where a.suppid = b.suppid and b.supprank = '**'
+
+Output:
+
+Supplier             rank  
+--------------------------------------
+Balaji suppliers  **  
+SupplierHQ       **  
+Best suppliers    **  
+OK suppliers     **  
+MAT-HQ          **  
+
+Query 3: Display all supplier name who are accepting only cash.
+
+SQL> select a.suppname as "Supplier",b.suppmop as "MOP" from supplier a, supplier@linkcomp75 b where  a.suppid = b.suppid and b.suppmop = 'cash'
+
+
+
+
+
+Output:
+
+Supplier                      MOP  
+-------------------------------------
+MS suppliers              cash  
+Balaji suppliers          cash  
+SK suppliers              cash  
+RAW-M suppliers     cash  
+OK suppliers             cash  
+
+Query 4: Display full fledged all supplier’s details.
+
+SQL> select a.suppid,suppname,suppaddr,suppcontact,b.suppcat,b.supprank,
+b.suppmop from supplier a,supplier@linkcomp75 b where a.suppid = b.suppid ;
+
+Output:
+
+SUPPID  SUPPNAME  SUPPADDR(BNO, BNAME, STREET, LANDMARK) SUPPCONTACT  SUPPCAT  SUPPRANK  SUPPMOP  
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+1  MS suppliers  ADDRESS_TY(1, 'Arunodaya', 'manipada', 'kes school')  22345687  finish  *  cash  
+2  Balaji suppliers  ADDRESS_TY(10, 'Shanti Niketan', 'lbs marg', 'ramdeo hotel')  3858174  finish  **  cash  
+3  Krishna suppliers  ADDRESS_TY(25, 'Raj', 'lsk road', 'shopping point')  9235768213  semifinish  *  cheque  
+4  SupplierHQ  ADDRESS_TY(9, 'Shreeram', 'nehru road', 'mosque')  9821476214  semifinish  **  cheque  
+5  SK suppliers  ADDRESS_TY(4, 'point soceity', 'gandhi marg', 'bus stop')  256551426  finish  *  cash  
+6  Best suppliers  ADDRESS_TY(77, 'AZ society', 'sanjay gandhi road', 'bus stop')  2145525  semifinish  **  cheque  
+7  RAW-M suppliers  ADDRESS_TY(56, 'Aaram society', 'mahatma marg', 'temple')  52847366  finish  *  cash  
+8  OK suppliers  ADDRESS_TY(88, 'Hari society', 'sk marg', 'lhs')  992365471  semifinish  **  cash  
+9  Nariman suppliers  ADDRESS_TY(88, 'New age soceity', 'ab marg', 'bus stop')  9827125202  finish  *  cheque  
+10  MAT-HQ  ADDRESS_TY(99, 'op marg', 'kk society', 'airport')  9871234544  finish  **  cheque  
+
+
+
+
+
+
+
+
+Query 5: Display all suppliers where their names begin with ‘M’ and supplying finished product.
+
+SQL> select a.suppname as "Supplier",b.suppcat as "Category" from supplier a,
+supplier@linkcomp75 b where a.suppid = b.suppid and a.suppname like 'M%';
+
+Output:
+
+Supplier           Category  
+--------------------------
+MS suppliers   finish  
+MAT-HQ        finish  
+
+
+
+
+Pract2-A	
+Title: Distributed Databases - Horizontal Fragmentation
+
+Question: Create a global conceptual schema Emp (Eno, Ename, Address, Email, Salary) and insert 10 records. Divide Emp into horizontal fragments using the condition that Emp1 contains tuples with salary < 10000 and Emp2 with 10000 < salary < 20000 on two different nodes. Fire the following queries:
+
+(i)	Find the salary of all employees
+(ii)	Find the Email of all employees where salary=15000
+(iii)	Find the employee name and Email where employee number is known
+(iv)	Find the employee name and address where employee number is known
+
+
+Horizontal Fragmentation:
+	A horizontal fragment of a relation is a subset of the tuples in that relation. The tuples that belong to the horizontal fragment are specified by a condition on one or more attributes of the relation. Often, only a single attribute is involved.
+Horizontal fragmentation divides a relation “horizontally” by grouping rows to create subsets of tuples, where each subset has a certain logical meaning. These fragments can then be assigned to different sites in the distributed system.
+
+Setup:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Table Structure :
+Creating table in bomb1(first server):
+
+SQL> create table emp_15
+  2  (
+  3  emp_no varchar2(5),
+  4  ename varchar2(25),
+  5  addr varchar2(50),
+  6  email varchar2(25),
+  7  sal number
+  8  )
+  9  /
+
+Table created.
+
+  SQL> create table log_emp_15
+  2  (
+  3  emp_no varchar2(5),
+  4  ename varchar2(25),
+  5  addr varchar2(50),
+  6  email varchar2(25),
+  7  sal number
+  8* )
+SQL> /
+
+Table created.
+
+Creating table in bomb3(second server):
+
+  SQL> create table emp_se15
+  2  (
+  3  emp_no varchar2(5),
+  4  ename varchar2(25),
+  5  addr varchar2(50),
+  6  email varchar2(25),
+  7  sal number
+  8* )
+SQL> /
+Table created.
+
+
+
+
+
+
+
+
+
+
+
+Creating trigger on the server(i.e. bomb1) where there is the log table
+
+  SQL> create or replace trigger cm_15
+  2  after insert on log_emp_15
+  3  for each row
+  4  when(new.sal is not null)
+  5  begin
+  6  if :new.sal<10000 then
+  7  insert into emp_15 values(:new.emp_no,:new.ename,:new.addr,:new.email,:new.sal);
+  8  else
+  9  insert into emp_se15@link4bomb1 values(:new.emp_no, :new.ename, :new.addr, :new.email, :new.sal
+ 10  end if;
+ 11* end;
+SQL> /
+
+Trigger created.
+
+
+Inserting records in the tables:
+
+SQL> insert into log_emp_15 values('e01','ekta','andheri(west)','ekta@hotmail.com',9999);
+1 row created.
+
+SQL> insert into log_emp_15 values('e02','sweta','borivali(east)','sweta@yahoo.com',15000);
+1 row created.
+
+Output :
+
+SQL> select * from log_emp_15;
+
+Emp_No      Ename                Addr                       Email                             Sal
+--------------  -------------      ----------------          ----------------                 ------------
+e01                 ekta                 andheri(west)        ekta@hotmail.com        9999
+
+e02                sweta               borivali(east)          sweta@yahoo.com       15000
+
+ 
+
+SQL> select * from emp_15;
+
+Emp_No      Ename                    Addr                 Email                             Sal
+--------------  -------------         -------------          ----------------                 ------------
+e01                 ekta                 andheri(west)      ekta@hotmail.com          9999
+
+
+
+
+
+  SQL> select * from emp_se15@link4bomb1;
+
+Emp_No        Ename                  Addr                 Email                             Sal
+--------------  -------------         -------------          ----------------                 ------------
+e02                sweta               borivali(east)       sweta@yahoo.com          15000
+
+
+Query1: List the salaries of all the employees
+
+SQL> select ename,sal from log_emp_15;
+
+Output:
+
+Ename                               Sal
+-------------------------    ---------------
+ekta                                 9999
+sweta                              15000
+
+OR
+
+SQL>  select a.ename,a.sal from emp_15 a
+ 2  union all
+ 3* select b.ename,b.sal from emp_se15@link4bomb1 b;
+
+Output:
+
+Name                            Sal
+------------------------    ----------
+ekta                              9999
+sweta                           15000
+
+Query3: Select the email of all employees where sal=15000
+
+  SQL> select a.ename,a.email from emp_15 a where a.sal=15000
+  2  union all
+  3* select b.ename,b.email from emp_se15@link4bomb1 b where b.sal=15000
+  4  /
+
+Output:
+
+Ename                     Email
+------------------------- -------------------------
+sweta                          sweta@yahoo.com
+
+
+
+
+
+
+
+Query4: Find  name and emp no where emp no is known
+
+  SQL> select a.ename,a.emp_no from emp_15 a where a.emp_no='e01'
+  2  union all
+  3* select b.ename,b.emp_no from emp_se15@link4bomb1 b where b.emp_no='e01' ;
+
+Output:
+
+Emp_No                  Ename
+-------------             ----------------
+e01			ekta
+
+Query5 : Find  name and address where emp no is known
+
+ SQL> select a.ename,a.addr from emp_15 a where a.emp_no='e01'
+  2  union all
+  3* select b.ename,b.addr from emp_se15@link4bomb1 b where b.emp_no='e01' ;
+
+Output:
+
+Ename                                   Addr
+------------------------- --------------------------------------------------
+ekta                                     andheri(west)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract2-B
+Title: Distributed Databases – Horizontal Fragmentation
+
+Question: Create a global conceptual schema cust_pdtls (cust_id, cust_name, cust_addr) and insert 10 records. Create two more schemas cust_bill(cust_id, cust_mobile, cust_billamt) and cust_totbill(cust_id, cust_totalamt) on two different nodes. Fire the following queries:
+
+1)	List out the customer name operating more than 2 mobiles.
+2)	Display the customer name where the total bill is greater than 2000.
+3)	Display the total bill for all the customers.
+4)	Display the customer name who is with us for the last 4 months.
+
+Setup:
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Table Definiton :
+
+Create table cust_pdtls in the server bomb1
+
+SQL> create table cust_pdtls
+2	(
+3	 cust_id varchar2(10) primary key,
+4	 cust_name varchar2(20),
+5	 cust_addr varchar2(20) 
+6	 )
+7	 /
+
+Table created.
+
+SQL> connect scott/tiger@bomb3
+Connected.
+
+Now create the table cust_bill in bomb2 server
+SQL> create table cust_bill
+2	(
+3	 cust_id varchar2(10),
+4	 cust_mobile number(10), 
+5	 cust_billamt number(10) 
+6	 )
+7	 /
+
+Table created.
+
+Now create the table cust_totbill in bomb3 server
+SQL> create table cust_totbill
+2	(
+3	 cust_id varchar2(10),
+4	 cust_totalamt number(20)
+5	 )
+6	 /
+
+Table created.
+
+Insert records in the tables.
+SQL> insert into cust_pdtls values(‘a01’,’ekta’,’andheri’);
+1 row created.
+
+SQL> insert into cust_pdtls values(‘a02’,’sharmila’,’borivali’);
+1 row created.
+
+
+SQL> insert into cust_pdtls values(‘a03’,’anita’,’bandra’);
+1 row created.
+
+
+SQL> insert into cust_pdtls values(‘a04’,’aarti’,’parle’);
+1 row created.
+
+SQL> insert into cust_pdtls values(‘a05’,’sweta’,’kandivali’);
+1 row created.
+
+Output:
+
+SQL> select * from cust_pdtls;
+
+CUST_ID    CUST_NAME            CUST_ADDR
+-------------    --------------------        ------------------------
+a01                   ekta                          andheri
+a02                   sharmila                   borivali
+a03                   anita                         bandra
+a04                   aarti                          parle
+a05                   sweta                        kandivali
+
+
+SQL> insert into cust_bill values(‘a01’, 9867698800,1500);
+1 row created.
+
+SQL> insert into cust_bill values(‘a02’, 9833525444,1220);
+1 row created.
+
+SQL> insert into cust_bill values(‘a01’, 9867698801,1500);
+1 row created.
+
+SQL> insert into cust_bill values(‘a02’, 9833525445,1220);
+1 row created.
+
+SQL> insert into cust_bill values(‘a03’,9820112345,220);
+1 row created.
+
+SQL> insert into cust_bill values(‘a04’,9819789023,2980);
+1 row created.
+
+SQL> insert into cust_bill values(‘a05’,9867723413,1000);
+1 row created.
+
+SQL> insert into cust_bill values(‘a05’,9867723414,1000);
+1 row created.
+
+SQL> insert into cust_bill values(‘a01’,9867698802,1000);
+1 row created.
+
+SQL> insert into cust_bill values(‘a01’,9867698711,800);
+1 row created.
+
+
+Output:
+
+SQL> select * from cust_bill;
+
+CUST_ID    CUST_MOBILE     CUST_BILLAMT
+--------------  -------------------    --------------------------
+a01                9867698800         	1500
+a02                9833525444         	1220
+a01                9867698801         	1500
+a02                9833525445         	1220
+a03                9820112345          	220
+a04                9819789023         	2980
+a05                9867723413         	1000
+a05                9867723414         	1000
+a01                9867698802         	1000
+a01                9867698711          	800
+
+10 rows selected.
+
+SQL> select * from cust_totbill;
+  
+CUST_ID    CUST_TOTALAMT
+------------- ------------------------------
+a01                 		3300
+a02                 		1220
+a03                  		220
+a04                 		2980
+a05                 		2000
+
+Create the following triggers :
+
+1)	Create trigger such that when a new customer’s reacord is being added in the cust_pdtls table his total bill amount should be 0 in the cust_totbill table.
+
+SQL> create trigger entercustomer
+  2  after insert on cust_pdtls
+  3  for each row
+  4  begin
+  5  insert into cust_totbill@link4bomb3 values(:new.cust_id,0);
+  6  end;
+  7  /
+Trigger created.
+2)	Create trigger such that when a customer’s record is being added in the cust_bill table, his bill amount should be added to the total bill amount in the cust_totbill table.
+
+
+
+
+SQL>  create trigger cust_entry
+  2  after insert on cust_bill@link4bomb2
+  3  for each row
+  4  when(new.cust_id is not null)
+  5  update cust_totbill@link4bomb3
+  6  set cust_totalamt=cust_totalamt + :new.cust_billamt
+  7* where cust_id=:new.cust_id
+SQL> /
+
+Trigger created.
+
+3)	Create trigger such that when a customer’s record is being updated in the cust_bill table, his bill amount should be updated to the total bill amount in the cust_totbill table.
+
+SQL> create trigger cust_update
+  2  after update on cust_bill@link4bomb2
+  3  for each row
+  4  when(old.cust_id is not null)
+  5  update cust_totbill@link4bomb3
+  6* set cust_totalamt=cust_totalamt + :new.cust_billamt - :old.cust_billamt
+SQL> /
+
+Trigger created.
+
+4)	Create trigger such that when a customer’s record is deleted in the cust_bill table, his bill amount should be updated to the total bill amount in the cust_totbill table.
+
+SQL> create trigger cust_delete
+  2  after delete on cust_bill@link4bomb2
+  3  for each row
+  4  when(old.cust_id is not null)
+  5  update cust_totbill@link4bomb3
+  6  set cust_totalamt=cust_totalamt - :old.cust_billamt
+  7* where cust_id=:old.cust_id
+SQL> /
+
+Trigger created.
+Queries:
+1)	List out the customer names operating more than 2 mobiles.
+
+SQL> select cust_id,count(cust_id) "total no. of mobiles" from cust_bill@link4bomb2
+  2* having count(cust_id)>2 group by cust_id
+SQL> /
+
+
+
+
+Output :
+
+CUST_ID    total no. of mobiles
+---------- -----------------------------
+a01                           4
+
+2)	Display the customer name where the total bill is greater than 2000.
+
+SQL> select a.cust_name,b.cust_totalamt,c.cust_mobile
+  2  from cust_pdtls a,cust_totbill@link4bomb3 b,cust_bill@link4bomb2 c
+  3  where a.cust_id=b.cust_id and b.cust_id=c.cust_id
+  4* and b.cust_totalamt>2000
+SQL> /
+
+Output :
+
+CUST_NAME     CUST_TOTALAMT       CUST_MOBILE
+-------------------- --------------------------   ---------------------------
+ekta                          	3300  			9867698800
+ekta                          	3300  			9867698801
+ekta                          	3300  			9867698802
+ekta                          	3300  			9867698711
+aarti                         	2980  			9819789023
+
+3)	Display the total bill for all the customers.
+
+SQL> select a.cust_name,b.cust_totalamt from cust_pdtls a,cust_totbill@link4bomb3 b
+  	2  where a.cust_id=b.cust_id;
+
+Output :
+
+CUST_NAME            CUST_TOTALAMT
+------------------       --------------------------------
+ekta                          		3300
+sharmila                      		1220
+anita                          		220
+aarti                         		2980
+sweta                         		2000
+
+4)	Display the customer name who is with us for the last 4 months.
+
+SQL>  select count(cust_id) from cust_bill@link4bomb2 having count(cust_id)>=4
+  2* group by cust_id
+SQL> /
+
+
+
+
+
+Output :
+
+COUNT(CUST_ID)
+---------------------------
+             4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract3-A
+Title: Distributed Databases - Replication
+
+Question: Create a global conceptual schema Emp(Eno;Ename;Address;Email;Salary)
+and insert 10 records. Store the replication of Emp into two different nodes and fire the following queries :
+
+1)	Find the salary of all employees.
+2)	Find the email of all employees where salary = 15000.
+3)	Find the employee name and email where employee number is known.
+4)	Find the employee name and address where employee number is known.
+
+Setup:
+ 
+
+
+Create table employ in bomb1 server.
+
+SQL> create table employ
+  2  (
+  3  eno number(5),
+  4  ename varchar2(10),
+  5  address varchar2(10),
+  6  email varchar2(15),
+  7  salary number(10)
+  8* )
+SQL> /
+
+Table created.
+
+
+
+SQL> desc employ
+ Name                                      Null?              Type
+ ----------------------------    -------------  -----------------
+ ENO                                                	NUMBER(5)
+ ENAME                                              	VARCHAR2(10)
+ ADDRESS                                            	VARCHAR2(10)
+ EMAIL                                              	VARCHAR2(15)
+ SALARY                                             	NUMBER(10)
+
+Now Create table employ1 in bomb3 server
+
+SQL>connect scott/tiger@bomb3
+Connected
+
+SQL> create table employ1
+  2  (
+  3  eno number(5),
+  4  ename varchar2(10),
+  5  address varchar2(10),
+  6  email varchar2(15),
+  7  salary number(10)
+  8* )
+SQL> /
+
+Table created.
+
+SQL> desc employ1
+ Name                                      Null?             Type
+ --------------------------------  ----------  ---------------------------
+ ENO                                                	NUMBER(5)
+ ENAME                                              	VARCHAR2(10)
+ ADDRESS                                            	VARCHAR2(10)
+ EMAIL                                              	VARCHAR2(15)
+ SALARY                                             	NUMBER(10)
+
+SQL> connect scott/tiger@bomb1
+Connected
+
+
+
+
+
+
+
+
+
+
+
+
+
+Create the following trigger
+Create trigger such that on insert of an record in the employ table, the same record is
+ inserted into the employ1 table.
+
+SQL> create trigger ins_emp
+  2  after insert on employ
+  3  for each row
+  4  begin
+  5  insert into employ1@link4bomb3 values(:new.eno, :new.ename, :new.address, :new.email, :new.salary);
+  6  end;
+  7  /
+
+Trigger created.
+
+Insert records :
+
+SQL> insert into employ values(1,'Ekta','Andheri','eks@yahoo.com',20000);
+1 row created.
+
+SQL> insert into employ values(2,'Sharmila','Borivali','sam@hotmail.com',20000);
+1 row created.
+
+SQL>  insert into employ values(3,'Anita','Goregaon','ani@rediff.com',15000);
+1 row created.
+
+SQL> insert into employ values(4,'Sweta','Dahisar','sweta@yahoo.com',10000);
+1 row created.
+
+SQL> insert into employ values(5,'Pathik','Kandivali','pat@yahoo',22000)
+1 row created.
+
+Queries :
+
+1)	Find the salary of all employees.
+
+SQL> select ename, salary from employ
+  2  union
+  3  select ename, salary from employ1@link4bomb3;
+
+Output:
+
+ENAME          SALARY
+----------     --------------------
+Anita                 15000
+Ekta                   20000
+Pathik                22000
+Sharmila            20000
+Sweta                 10000
+
+2)	Find the email of all employees where salary = 15000.
+
+SQL> select email from employ where salary=15000
+  2  union
+  3  select email from employ1 where salary=15000;
+
+Output :
+
+EMAIL
+---------------
+ani@rediff.com
+
+
+3)	Find the employee name and email where employee number is known.
+
+SQL> select ename,email from employ where eno=1
+  2  union
+  3* select ename,email from employ where eno=1;
+
+Output :
+
+ENAME      EMAIL
+---------- --------------------
+Ekta          eks@yahoo.com
+
+
+4)	Find the employee name and address where employee number is known.
+
+SQL> select ename,address from employ where eno=1
+  2  union
+  3* select ename,address from employ where eno=1;
+
+Output :
+ENAME      ADDRESS
+---------- ---------------------
+Ekta       	   Andheri
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract3–B
+Title: Distributed Databases: Replication
+
+Question: Create a global conceptual schema supplier having attributes: suppid, suppname, suppaddr, suppcontact, suppcat, supprank, suppmop. Perform replication of this schema through a trigger. The replicated table should be in other computer node. 
+
+Table creation: 
+
+Note: The following schema should be created in both terminals.
+
+create table supplier
+(
+ suppid     NUMBER,  
+ suppname varchar2(20),
+ suppaddr varchar2(30),
+ suppcontact number,
+ suppcat     VARCHAR2(20),  
+ supprank     VARCHAR2(20),  
+ suppmop    VARCHAR2(20)  
+);
+
+Database link creation:
+
+create database link todb connect to hemant identified by hemant using 'db';
+
+Creation of Trigger:
+Note: The following trigger will activate on update and insert events on table supplier in the terminal where the link is created.
+
+create or replace trigger rep_trig
+after insert or update on supplier
+for each row
+begin
+if inserting then
+insert into supplier@todb  
+values(:new.suppid,:new.suppname,:new.suppaddr,:new.suppcontact,:new.suppcat,:new.supprank,:new.suppmop);
+elsif updating then
+update supplier@todb set suppname = :new.suppname,suppaddr = :new.suppaddr,suppcontact =  
+:new.suppcontact,suppcat = :new.suppcat,supprank = :new.supprank,suppmop = :new.suppmop where suppid =  
+:new.suppid;
+end if;
+end;
+Creation of rows:
+
+insert into supplier values(1,'Hemant','Kalina',26676733,'semi-finish','*','cash');
+insert into supplier values(2,'Kapil','Kalina',2593745,'finish','***','cheque');
+
+Firing Queries:
+
+Query 1: Display all supplier’s name stored in other terminal.
+SQL> select suppname as "Name" from supplier@todb;
+
+Output:
+
+Name
+---------
+Hemant
+Kapil
+
+Query 2: Update supplier contactno whose id = 1
+SQL> update supplier set suppcontact = 30303030 where suppid = 1;
+SQL> select suppid, suppcontact as "Contact" from supplier@todb;
+
+Output:
+
+Suppid                     Contact
+------------------------------------
+1                              30303030
+2                              2593745
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Object-Oriented Databases
+Overview: An object oriented database management system (OODBMS) is the coupling of database and object oriented concepts. OODBMS concepts have their origin in object oriented programming language that contains abstract data types, encapsulation, information hiding methods, class/type hierarchies, inheritance etc. 
+
+An object has state (value) and behavior (operation).
+
+
+Object oriented database
+	Object oriental database system (OODBMS) concept have their origin in
+ object-oriented programming languages that contain abstract data types,
+ encapsulation, informing hiding, methods, class/ type hierarchies, inheritance etc.
+
+
+For Example- An Employee can be an object with state as fields eno, ename, bdate, salary and behavior may be finding age operation to find the age of an employee using bdate.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract4-A
+Title: Object Oriented Databases
+
+Question: Using Object Oriented databases create the following types:
+
+a)	AddrType1 (Pincode: number, Street: char, City: char, State: char, No: number)
+b)	BranchType (address: AddrType1, phone1: integer, phone2: integer)
+c)	AuthorType (name: char, addr AddrType1)
+d)	PublisherType (name: char, addr: AddrType1, branches: BranchTableType)
+e)	AuthorListType as varray, which is reference to AuthorType
+
+Next create the following tables:
+f)	BranchTableType of BranchType
+g)	authors of AuthorType
+h)	books (title: varchar, year: date, published_by ref PublisherType, authors AuthorListType)
+i)	Publishers of PublisherType
+
+
+Insert 10 records into the above tables and fire the following queries:
+
+a)	List all of the authors that have the same address as their publisher
+b)	List all the authors that have the same pin code as their publisher.
+c)	List all books that have 2 or more authors.
+d)	List the title of the book that has the most authors:
+e)	List the name of the publisher that has the most branches.
+f)	Name of authors who have not published more than a book.
+g)	all the branches that belong to the publisher 'tata' to the publisher ‘joshi'
+h)	List all the authors who have published more than one book.
+i)	List all books (title) where the same author appears more than once on the list of authors (assuming that an integrity constraint requiring that the name of an author is unique in a list of authors has not been specified).
+
+
+Create different Types and Tables 
+
+SQL> Create or replace type AddrType1 as object(
+  2  Pincode number(5),
+  3  Street char(20),
+  4  City varchar2(50),
+  5  state varchar2(40),
+  6* no number(4) )
+SQL> /
+
+Type created.
+
+
+
+
+SQL> create or replace type BranchType as object(
+  2  address AddrType1,
+  3  phone1 integer,
+  4* phone2 integer )
+SQL> /
+
+Type created.
+
+SQL> create or replace type BranchTableType as table of BranchType;
+SQL> /
+
+Type created.
+
+SQL> create or replace type AuthorType as object(
+  2  name varchar2(50),
+  3* addr AddrType1 )
+SQL> /
+
+Type created. 
+
+SQL> create table authors of AuthorType;
+Table created.
+
+SQL> create or replace type AuthorListType as varray(10) of ref AuthorType
+SQL> /
+
+Type created.
+
+SQL> create or replace type PublisherType as object(
+  2  name varchar2(50),
+  3* addr AddrType1, branches BranchTableType)
+SQL> /
+
+Type created.
+SQL> create table Publishers of PublisherType NESTED TABLE branches STORE as branchtable
+SQL> /
+
+Table created.
+
+SQL> create table books(
+  2  title varchar2(50),
+  3  year date,
+  4  published_by ref PublisherType,
+  5* authors AuthorListType)
+SQL> /
+
+Table created.
+
+
+Insertion of different values in the tables
+
+Table Name1: Authors 
+Format        : Authors(name, addr:<pincode,street,city,state,no>)
+/*Here addr is the name of an object-valued attribute, which has 5 components.*/
+
+SQL> insert into Authors values('Rabiner',
+  2* AddrType1(5002,'sstreet','pune','mha',04));
+1 row created.
+
+SQL> insert into Authors values('Rabiner',
+  2* AddrType1(7007,'sstreet','mumbai','mha',1007));
+1 row created.
+ 
+SQL> insert into Authors values('Schiller',
+  2* AddrType1(7008,'nstreet','nasik','mha',08));
+1 row created.
+ 
+
+SQL> insert into Authors values('Jerry',
+  2* AddrType1(7003,'dstreet','mumbai','mha',1003));
+1 row created.
+
+SQL> insert into Authors values('Paulraj',
+  2* AddrType1(7008,'sstreet','mumbai','mha',1007));
+1 row created.
+
+SQL> insert into Authors values('Elmasri',
+  2* AddrType1(7006,'nstreet','mumbai','mha',1006));
+1 row created.
+
+
+SQL> insert into Authors values('Ramakrishnan',
+  2* AddrType1(8002,'dstreet','pune','mha',1003));
+1 row created.
+ 
+SQL> insert into Authors values('Jerry',
+  2* AddrType1(8003,'dstreet','pune','mha',1003));
+1 row created.
+
+
+Table name2:    Publishers 
+Format       	 :    Publishers(name, addr:<pincode,street,city,state,no>,  branches:setof<address:<pincode,street,city,state,no>,phone1,phone2>)
+/*where addr is an object-valued attribute. Branches is a complex-valued attribute, in this case a nested table where each element in the table has 3 parts: an address and two phones*/ 
+
+
+ SQL> insert into Publishers values('Pearson',
+  2   AddrType1(4002,'rstreet','mumbai','mha',03),
+  3   BranchTableType(BranchType(
+  4* AddrType1(5002,'fstreet','mumbai','mha',03),23406,69896)));
+1 row created.
+ 
+ SQL> insert into Publishers values('ekta',
+  2   AddrType1(7007,'sstreet','mumbai','mha',1007),
+  3   BranchTableType(BranchType(
+  4* AddrType1(7007,'sstreet','mumbai','mha',1007),4543545,8676775)));
+1 row created.
+ 
+SQL> insert into Publishers values('joshi',
+  2   AddrType1(7008,'sstreet','mumbai','mha',1007),
+  3   BranchTableType(BranchType(
+  4*  AddrType1(1002,'sstreet','nasik','mha',1007),456767,7675757)));
+1 row created.
+
+ SQL> insert into Publishers values('ekta',
+  2   AddrType1(7002,'sstreet','pune','mha',1007),
+  3   BranchTableType(BranchType(
+  4*  AddrType1(1002,'sstreet','pune','mha',1007),4543545,8676775)));
+1 row created.
+
+ SQL> insert into Publishers values('wiley',
+  2   AddrType1(6002,'sstreet','nasik','mha',1007),
+  3   BranchTableType(BranchType(
+  4*  AddrType1(6002,'sstreet','nasik','mha',1007),4543545,8676775)));
+1 row created.
+
+Table Name3: books 
+
+Format       :  Books(title,year,published_by: ref<Publishers>, authors:list of ref  
+                                      Author)        
+
+/*Where published_by is a reference to elements of the table Publishers; authors is a complex-valued attribute, in this case a list of references to objects of the type author(managed by table ‘Author’.*/
+
+SQL> insert into books
+  2  select 'DSP','28-may-1983',ref(pub),AuthorListType(ref(aut)) from
+  3* Publishers pub,Authors aut where pub.name='joshi' and aut.name='Elmasri';
+1 row created.
+
+SQL> insert into books
+  2  select 'compiler','09-jan-1890',ref(pub),AuthorListType(ref(aut)) from
+  3  Publishers pub,Authors aut where pub.name='wiley'
+  4* and aut.name='Jerry';
+1 row created.
+
+SQL> insert into books
+  2  select 'c','25-may-1983',ref(pub),AuthorListType(ref(aut)) from
+  3  Publishers pub,Authors aut where pub.name='Pearson'
+  4* and aut.name='Rabiner';
+2 rows created.
+
+Firing queries on the created tables
+
+a) List all of the authors that have the same address as their publisher:
+
+SQL> select a.name
+  2  from authors a, publishers p
+  3  where a.addr = p.addr;
+
+Output:
+
+ NAME
+--------------------------------------------------
+Rabiner
+Paulraj
+
+b) List all of the authors that have the same pin code as their publisher:
+
+SQL> select a.name
+  2  from authors a, publishers p
+  3  where a.addr.pincode = p.addr.pincode;
+Output:
+
+NAME
+--------------------------------------------------
+Rabiner
+Schiller
+Paulraj
+
+c) List all books that have 2 or more authors:
+
+SQL> select * from books b where 1 < (
+  2  select count(*)
+  3  from table(b.authors));
+
+no rows selected
+
+
+
+
+
+
+
+
+
+d) List the title of the book that has the most authors:
+
+SQL> Select title
+  2  from books b, table(b.authors)
+  3  group by title
+  4  having count(*)
+  5  =
+  6  (select max(count(*))
+  7  from books b, table(b.authors)
+  8* group by title)
+  9  /
+
+Output:
+
+TITLE
+--------------------------------------------------
+c
+compiler
+
+e) List the name of the publisher that has the most branches:
+
+SQL> Select p.name
+  2  from publishers p, table(p.branches)
+  3  group by p.name having count(*)> =
+  4  all (select count(*)
+  5  from publishers p, table(p.branches)
+  6* group by name);
+
+
+
+Output:
+
+NAME
+--------------------------------------------------
+ekta
+
+f) Name of authors who have not published a book:
+
+SQL> select a.name
+  2  from authors a
+  3  where not exists(
+  4  select b.title
+  5  from books b, table(select authors
+  6  from books b1
+  7  where b.title = b1.title) a2
+  8  where a.name = name);
+
+OR
+
+
+SQL> select a.name
+  2  from authors a
+  3  where not exists( select b.title
+  4  from books b, table(b.authors)
+  5  where a.name = name);
+
+no rows selected
+g) Move all the branches that belong to the publisher 'tata' to the publisher ‘joshi'
+
+SQL> insert into table(
+  2  select branches
+  3  from publishers
+  4  where name = 'wiley')
+  5  select b.* from publishers p, table(p.branches) b
+  6* where name = 'ekta';
+2 rows created.
+
+/*Here all the branches belonging to 'ekta' is moved(copied) to wiley's branch i.e wiley will have its own branch with 3 more branches of ekta that ekta has*/
+
+h) List all authors who have published more than one book:
+
+SQL> select a.name
+  2  from authors a, books b, table(b.authors) v
+  3  where v.column_value = ref(a)
+  4* group by a.name having count(*) > 1;
+OR
+
+SQL> select a.name from Authors a,books b,table(b.authors) v where v.column_value=ref(a) group by a.name;
+
+Output:
+
+NAME
+--------------------------------------------------
+Jerry
+Rabiner
+
+/*This query will give the names of those authors who have published a book*/
+
+i) List all books (title) where the same author appears more than once on the list of authors (assuming that an integrity constraint requiring that the name of an author is unique in a list of authors has not been specified).
+
+
+
+
+
+
+ SQL> select title
+  2   from authors a, books b, table(b.authors) v
+  3   where v.column_value = ref(a)
+  4   group by title having count(*) > 1;
+
+Output:
+
+TITLE
+--------------------------------------------------
+c
+compiler
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract4-B
+Title: Object Oriented Databases
+
+Using Object Oriented databases, create the following types:
+
+a)	state61(st_code: number, st_name: varchar2, st_district: varchar2, st_pincode: number)
+b)	contact_detail61(residence_no: number, office_no: number, email: varchar2, fax: number, mobile: number)
+c)  address61(road_no: varchar2, road_name: varchar2, landmark:     
+	 varchar, state: state61, contact: contact_detail61)
+d)  staff61(staff_id: number, staff_name: varchar2, staff_address: 
+address61, staff_deptno: number, staff_sal: number, staff_other: varchar2, dob: date) 
+define method getAge() to calculate age using dob
+     e)  dept61(dept_id: number, location: varchar2, dept_name: varchar2,
+  	emp: staffTableType)
+
+Next create the following tables:
+ 
+     e)  staffTableType of staff61
+     f)  dpt_refernce of dept61 with nested relation (emp) 
+
+Insert records into the above tables and fire the following queries:
+
+a) Display staff ID and department name of all employees. 
+b) How many workers are in particular department.
+c) Find department name for particular staff name
+d) Display department-wise report
+e) Display age and birth date of particular employee
+
+Create different Types and Tables 
+
+SQL> create or replace type state61 as object
+2  (
+3  st_code number(5),
+4  st_name varchar2(40),
+5  st_district varchar2(50),
+6  st_pincode number(7)
+7* )
+SQL>/
+
+Type created.
+
+
+
+
+
+
+
+SQL>create or replace type contact_detail61 as object
+ 2  (
+ 3  residence_no number(10),
+ 4  office_no number(10),
+ 5  email varchar2(30),
+ 6  fax number(10),
+ 7  mobile number(10)
+ 8* )
+SQL>/
+
+Type created.
+
+SQL>create or replace type address61 as object
+ 2  (
+ 3  road_no   varchar2(7),
+ 4  road_name varchar2(40),
+ 5  landmark varchar2(40),
+ 6  state state61,
+ 7  contact contact_detail61
+ 8* )
+SQL>/
+
+Type created.
+
+SQL>create or replace type staff61 as object
+2  (
+3  staff_id number(6),
+4  staff_name varchar2(40),
+5  staff_address address61,
+6  staff_deptno number(3),
+7  staff_sal number(6),
+8  staff_other varchar2(40),
+9  dob date,
+10  member function getAge return number
+11* )
+SQL>/
+
+Type created.
+
+SQL>create or replace type body staff61 as member function getAge return number as
+2  begin
+3  return trunc(months_between(sysdate,dob)/12);
+4  end getAge;
+5*  end;
+SQL>/
+
+Type created.
+
+
+SQL>create or replace type staffTableType as table of staff61
+SQL>/
+
+Type created.
+
+SQL>create or replace type dept61 as object
+2  (
+3  dept_id number(3),
+4  location varchar2(30),
+5  dept_name varchar2(20),
+6  emp staffTableType
+7* )
+SQL>/
+
+Type created.
+
+SQL>create table dpt_refernce of dept61 nested table emp store as NTrelation
+SQL>/
+
+Table created.
+
+Insertion of different values in the tables
+
+Table Name1: dpt_refernce 
+Format         : dpt_refernce(dept_id, location, dept_name,  
+      stafffTableType < staff61 < staff_id, staff_name, staff_address:
+      address61 < road_no, road_name, landmark, 
+      state: state61 < st_code , st_ name, st_district, st_pincode >,
+      contact: contact_detail61 < residence_no, office_no, email, fax,
+      mobile > >, staff_deptno, staff_sal, staff_other, dob > >)             
+
+
+SQL> insert into dpt_refernce values(1,'Mumbai','Sales',
+  2  staffTableType(staff61(1,'Ekta Bhatt',
+  3  address61('A-1','L.T. road','Status Hotel',
+  4  state61(1,'Maharashtra','Mumbai',400092),
+  5  contact_detail61(28994177,28182729,'ektabhatt@yahoo.com',28994177,9818967345)),
+  6* 1,10000,'HOD','17-aug-1984')));
+1 row created.
+
+
+
+
+
+
+
+
+
+SQL> insert into dpt_refernce values(1,'Mumbai','Sales',
+  2  staffTableType(staff61(2,'Sweta Mehta',
+  3  address61('C-1','yari road','',
+  4  state61(1,'Maharashtra','Mumbai',400069),
+  5  contact_detail61(26321115,26331739,'sweta.mehta@rediffmail.com',26321116,918967345)),
+  6* 1,6000,'HOD','04-nov-1984')));
+1 row created.
+
+SQL> insert into dpt_refernce values(2,'Mumbai','Accounts',
+  2  staffTableType(staff61(3,'Sharmila Dave',
+  3  address61('C-1','M.G. road','Sanjeevani Hospital',
+  4  state61(1,'Maharashtra','Mumbai',400078),
+  5  contact_detail61(28331112,28987058,'sam_dave@hotmail.com',28982430,9833196734)),
+  6* 2,2000,'clerk','28-sep-1984')));
+1 row created. 
+
+SQL> insert into dpt_refernce values(3,'Mumbai','Purchase',
+  2  staffTableType(staff61(4,'Anita Sakunde',
+  3  address61('E-2','B.S.road','Vikas Kendra',
+  4  state61(2,'Goa','Panji',419832),
+  5  contact_detail61(26831112,26897058,'anitasakunde@gmail.com',26897059,9820636448)),
+  6* 3,7000,'','09-sep-1984')));
+1 row created.
+
+SQL> insert into dpt_refernce values(3,'Mumbai','Purchase',
+  2  staffTableType(staff61(5,'Pathik Doshi',
+  3  address61('E-2','Nehru road','HDFC Bank',
+  4  state61(1,'Maharashtra','Vileparle',400056),
+  5  contact_detail61(26149172,26157058,'pathik_doshi@yahoo.co.in',26897059,9820739488)),
+  6* 3,9000,'','29-sep-1985')));
+1 row created.
+
+Firing queries on the created tables
+
+a) Display staff ID and department name of all employees. 
+
+SQL> select p.dept_name, q.staff_id from dpt_refernce p,table(p.emp) q;
+
+
+
+
+
+Output:
+
+DEPT_NAME              STAFF_ID
+-------------------- -------------------------
+Sales                         	     1
+Sales                                 2
+Accounts                          3
+Purchase                           4
+Purchase                           5
+
+b) How many workers are in particular department.
+
+SQL> select p.dept_id,p.dept_name,count(q.staff_id) as number_of_employees
+  2  from dpt_refernce p,table(p.emp) q where p.dept_name='Purchase'
+  3* group by dept_id,dept_name;
+
+Output:
+
+   DEPT_ID   DEPT_NAME       NUMBER_OF_EMPLOYEES
+-------------- -------------------- ---------------------------------------------
+         3           Purchase                                  2
+
+c) Find department name for particular staff name
+
+SQL>  select p.dept_id,p.dept_name from dpt_refernce p,
+  2* table(p.emp) q where q.staff_name='Ekta Bhatt' ;
+
+Output:
+
+   DEPT_ID    DEPT_NAME
+--------------  -----------------------
+        1		      Sales
+
+
+d) Display department-wise report
+
+SQL> select p.dept_id,p.dept_name,count(q.staff_id) as number_of_employees
+  2  from dpt_refernce p,table(p.emp) q group by p.dept_id,
+  3* p.dept_name ;
+
+
+Output:
+
+   DEPT_ID 	DEPT_NAME        NUMBER_OF_EMPLOYEES
+--------------- -------------------- ---------------------------------------------
+         1 	Sales                                  2
+         2 	Accounts                           1
+         3 	Purchase                            2
+
+e) Display age and birth date of particular employee
+SQL> select q.dob,q.getAge() as Age from dpt_refernce p,
+  2* table(p.emp) q where q.staff_name='Ekta Bhatt' ;
+
+Output:
+DOB                   AGE
+----------------- -----------
+17-AUG-84         21
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract6-A
+Title: Temporal Databases
+
+Question: Create a table tbl Emp_Appnt, which stores the account number,name, and valid time say, recruitment data retirement date. Insert 10 records and fire the following queries
+
+a)	Find all the employees who join the company on 2/3/2001
+b)	Find all the employees who will retired on 2/3/2001
+
+
+Setup:
+
+ Table definition :
+
+SQL> create table empant 
+  2  (
+  3  acc_no number(10),
+  4  aname varchar2(20),
+  5  join_date date,
+  6  retire_date date
+  7  )
+  8  /
+
+Table created.
+
+Insertion of different values in the tables
+
+Table Name: Empant
+Format       : empant(acc_no, aname, join_date ,retire_date)
+
+SQL> insert into empant values(101, 'Sam', '22-mar-2001', '21-mar-2004');
+1 row created.
+
+SQL> insert into empant values(102, 'Anne', '04-apr-1999', '10-may-2005');
+1 row created.
+
+SQL> insert into empant values(103, 'Smith', '01-dec-1998', '10-june-2002');
+1 row created.
+
+SQL> insert into empant values(104, 'Harry', '15-May-2000', '14-May-2006');
+1 row created.
+
+SQL> insert into empant values(105, 'Jyo', '10-Aug-1995', '9-Aug-2005');
+1 row created.
+
+SQL> insert into empant values(107, 'Nick', '22-Mar-2001', '20-Mar-2005');
+1 row created.
+
+SQL> insert into empant values(108, 'ABC', '12-Sep-2000', '14-May-2006');
+1 row created.
+
+SQL> select * from empant;
+    ACC_NO        ANAME       JOIN_DATE     RETIRE_DATE
+ -----------------  ---------------   ------------------ ------------------------
+       101               Sam                22-MAR-01       21-MAR-04
+       102               Anne               04-APR-99       10-MAY-05
+       103               Smith              01-DEC-98       10-JUN-02
+       104               Harry              15-MAY-00      14-MAY-06
+       105               Jyo                  10-AUG-95       09-AUG-05
+       106              Vicky               12-SEP-94        04-AUG-05
+       107               Nick                22-MAR-01      20-MAR-05
+       108               ABC                12-SEP-00        14-MAY-06
+     8 rows selected.
+
+
+
+
+
+Firing queries on the created tables
+
+1) Find the employees who have joining date 22-Mar-2001
+
+SQL> select * from empant where join_date = '22-Mar-2001' ;
+
+
+
+
+
+
+
+Output:
+
+    ACC_NO        ANAME       JOIN_DATE     RETIRE_DATE
+ -----------------  ---------------   ------------------ ------------------------
+       101               Sam                22-MAR-01       21-MAR-04
+       107               Nick                22-MAR-01      20-MAR-05
+
+2) Find the employees who have retirement date 14-May-2006
+
+SQL> select * from empant where retire_date = '14-May-2006' ;
+
+Output:
+  
+    ACC_NO        ANAME       JOIN_DATE     RETIRE_DATE
+ -----------------  ---------------   ------------------ ------------------------
+       104               Harry              15-MAY-00      14-MAY-06
+       108               ABC                12-SEP-00        14-MAY-06
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract6-B
+Title: Temporal Databases
+
+Question: Create a table tbl_shares, which stores the, name of company, number of shares, and price per share at transaction time. Insert 10 records and fire the following queries.
+
+a)	Find all the names of a company whose share price is more than Rs.100 at 11:45 A.M.
+b)	Find the name of company which has highest shares price at 5.00 P.M.
+
+Setup:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Table definition :
+
+SQL> Create table tbl_shares15 
+2 (
+3 cname varchar2(20),
+4 nofshares number(5),
+5 pricepshare number(5),
+6 transtime timestamp(6)
+7 );
+ 
+Table created.
+
+Insertion of different values in the tables
+
+Table Name: tbl_shares15
+Format         : tbl_shares(cname, noofshares, pricepshare , transtime)
+
+SQL> insert into tbl_shares15 values(‘Reliance Infocom’,250,25,systimestamp);
+1 row created.
+
+SQL> insert into tbl_shares15 values('Tata',205,20,'05-jun-04 11.45.00.000000 am');
+1 row created.
+
+SQL> insert into tbl_shares15 values('Wipro',250,25,'10-mar-03 06.15.00.000000 pm');
+1 row created.
+
+SQL> insert into tbl_shares15 values('Patni',115,15,'08-may-01 07.25.00.000000 am');
+1 row created.
+
+SQL> insert into tbl_shares15 values('TCS',140,12,'14-apr-05 05.30.00.000000 pm');
+1 row created.
+
+SQL> insert into tbl_shares15 values('Google',310,30,'12-sep-03 10.30.00.000000 am');
+1 row created.
+
+SQL> insert into tbl_shares15 values('Hero Honda',100,250,'21-aug-04 05.30.00.000000 pm');
+1 row created.
+
+SQL> select * from tbl_shares15;
+
+Output:
+CNAME          NOFSHARES     PRICEPSHARE      TRANSTIME
+-------------  ----------------------  ----------------------    --------------------
+Infosys                  110                      10                       01-JAN-03    04.00.00.000000 PM
+Tata                       205                      20                      05-JUN-04    11.45.00.000000 AM
+Wipro                    250                      25                      10-MAR-03   06.15.00.000000 PM
+Patni                      115                      15                      08-MAY-01   07.25.00.000000 AM
+TCS                       140                      12                      14-APR-05     05.30.00.000000 PM
+Google                   310                      30                      12-SEP-03     10.30.00.000000 AM
+Hero Honda           100                      250                    21-AUG-04    05.30.00.000000 PM
+7 rows selected.
+1) Find all the names of a company whose share price is more than Rs.100 at 11:45 A.M.
+
+  SQL> select cname from tbl_shares15
+  2  where pricepshare>15
+  3* and to_char(transtime,'HH12:MI:AM')='11:45:AM'
+
+SQL> /
+
+Output:
+cname
+--------------------
+Tata
+
+2) Find the name of company which has highest shares price at 5.00 P.M.
+
+SQL> select cname from tbl_shares15 where pricepshare in
+  2  (select max(pricepshare) from tbl_shares15
+  3* where to_char(transtime,'HH12:MI:AM')='05:30:PM')
+SQL> /
+
+Output:
+
+cname
+--------------------
+Hero Honda
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract6-C
+Title: Temporal Databases
+
+
+Question: Create a table table Emp_Appnt, which stores the account number, name, and valid time say, recruitment date and retirement date. Create a trigger for valid time to check that no two records of same employee have common employment period and does not allow the user update the records. Trigger should also fill up the empty retirement date.
+
+
+Setup:
+
+ Creating trigger: 
+
+ SQL>  create or replace trigger trigemp_appnt
+ 2   before insert or update
+ 3   on empant
+ 4   referencing new as new
+ 5   for each row
+ 6
+ 7   /*declaring variables*/
+ 8
+ 9   declare
+ 10 nssn_old   number(5);
+ 11 vname_old  varchar2(10);
+ 12 drec_old   date;
+ 13 dret_old   date;
+ 14 nssn_new   number(5);
+ 15 vname_new  varchar2(10);
+ 16 drec_new   date;
+ 17 dret_new   date;
+ 18 drec_min   date;
+ 19 dret_min   date;
+ 20 drec_max   date;
+ 21 dret_max   date;
+ 22
+ 23  /*procedure begins*/
+ 24 
+ 25 begin
+ 26
+ 27  /*assigning old values in the record*/
+ 28
+ 29  nssn_old:=:old.acc_no;
+ 30  vname_old:=:old.aname;
+ 31  drec_old:=:old.join_date;
+ 32  dret_old:=:old.retire_date;
+ 33
+ 34  /*assigning values passed by the user*/
+ 35
+ 36  nssn_new:=:new.acc_no;
+ 37  vname_new:=:new.aname;
+ 38  drec_new:=:new.join_date;
+ 39  dret_new:=:new.retire_date;
+ 40
+ 41  /*retirement date must not be less then recruitment date*/
+ 42
+ 43   if drec_new>dret_new then
+ 44        raise_application_error(-20001,'record cannot be added');
+      45  end if;
+      46
+47	/*on inserting values*/
+48	
+49	if inserting then
+50	     select max(retire_date) into dret_max from empant 
+51	              where acc_no=nssn_new;
+52	    
+53	   /* the new recruitment date must be greater to last retirement date of the employee */
+54	 
+55	        if drec_new<dret_max then
+56	   	raise_application_error(-20001,'record cannot be added');
+57	       end if;
+58	  
+59	  update empant
+60	         set retire_date= drec_new-1
+61	  where join_date not in (select join_date from empant where 
+62	   retire_date>join_date) and acc_no=nssn_new;
+63	end if;
+64	  
+65	  if updating then
+66	   	if nssn_old!=nssn_new then
+67	             	raise_application_error(-20002,'record cannot be updated');
+68	 	elsif vname_old!=vname_new then
+69	            	raise_application_error(-20002,'record cannot be updated');
+70	  elsif drec_old!=drec_new then
+71	  	raise_application_error(-20002,'record cannot be updated');
+72	 	end if; 
+73	  end if;
+74	 end;
+75	 /
+
+Trigger created.
+
+Insertion of different values in the tables
+Table Name: Empant
+Format       : empant(acc_no, aname, join_date ,retire_date)
+
+
+SQL> insert into empant values(109,'ekta','12-jan-2000', '14-may-1999');
+
+insert into empant values(109,'ekta','12-jan-2000', '14-may-1999')
+            *
+error at line 1:
+ora-20001: record cannot be added
+ora-06512: at "scott.trigemp_appnt", line 28
+ora-04088: error during execution of trigger 'scott.trigemp_appnt'
+
+
+Adding a record in which the retirement date is not added and then when you update 
+that record in which by mistake you enter the retirement date to be smaller than that 
+of the joining date of that particular employee.
+
+SQL> insert into empant values(109,'ekta','12-jan-2000', ' ');
+1 row created.
+
+SQL> select * from empant;
+
+    acc_no           aname             join_date                retire_date
+       ---------------- ----------------    --------------------   --------------------------
+       101              sam                   22-mar-01           21-mar-04
+       102              anne                  04-apr-99            10-may-05
+       103              smith                 01-dec-98           10-jun-02
+       104              harry                 15-may-00          14-may-06
+       105              jyo                     10-aug-95           09-aug-05
+       107              nick                   22-mar-01           20-mar-05
+       108              abc                    12-sep-00            14-may-06
+       109              ekta                   12-jan-00             
+
+  8 rows selected. 
+
+
+SQL> update empant
+  2  set retire_date='01-may-1999'
+  3* where acc_no=109
+SQL> /
+
+update empant
+       *
+error at line 1:
+ora-20001: record cannot be added
+ora-06512: at "scott.trigemp_appnt", line 28
+ora-04088: error during execution of trigger 'scott.trigemp_appnt'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract6-D
+Title: Temporal Databases
+
+Question: Create a table employee which stores the employee number,
+ employee name, email, address and salary.
+Create a table log_employee which stores employee number, old salary,
+ updated salary and date.
+
+Create the following triggers :
+a)	On insert of an employee record in the employee table, the corresponding
+ values must be entered in the log_employee table.
+b)	On update of any record in the employee table, the corresponding record
+ must be entered in the log_employee table.
+
+Insert 10 records and fire the following queries:
+a)	Display the latest salary of all the employees.
+b)	Display employee name that has got more than 2 user events.
+c)	Display employee name that has got an increment of 5000 in one increment.
+d)	Display employee name and salary of all the employees at second increment.
+e)	Display employee name, total salary and total increment.
+
+
+
+Setup:
+ 
+Table definition:
+
+
+
+
+
+
+
+
+SQL> create table emp_15
+  2  (
+  3  emp_no varchar2(5),
+  4  ename varchar2(25),
+  5  addr varchar2(50),
+  6  email varchar2(50),
+  7  sal number
+  8  )
+  9  /
+
+Table created.
+
+
+  SQL> create table update_15
+  2  (
+  3  emp_no varchar2(5),
+  4  old_sal number,
+  5  up_sal number(10),
+  6  e_date date,
+  7  primary key(emp_no,e_date)
+  8* )
+SQL> /
+
+Table created.
+
+Creating triggers:
+a)	On insert of an employee record in the employee table, the corresponding 
+values must be entered in the log_employee table.
+
+SQL> create or replace trigger ins_sal15
+  2  after insert on emp_15
+  3  for each row
+  4* insert into update_15 values(:new.emp_no,null,:new.sal,sysdate)
+SQL> /
+
+Trigger created.
+
+b)	On update of any record in the employee table, the corresponding record
+ must be entered in the log_employee table.
+
+
+ SQL> create or replace trigger upd_sal15
+  2  after update on emp_15
+  3  for each row
+  4* insert into update_15 values(:new.emp_no,:old.sal,:new.sal,sysdate);
+Trigger created.
+Insertion of different values in the tables
+
+Table Name: emp_15 
+Format      : emp_15(emp_no, ename, addr, email , sal)
+SQL>  insert into emp_15 values
+  2* ('a01','ekta','borivali','eks@rediffmail.com',15000);
+1 row created.
+
+SQL> insert into emp_15 values
+  2* ('a02','anita','andheri','anitasakunde@hotmail.com',8900);
+1 row created.
+
+
+SQL> insert into emp_15 values
+  2* ('a03','sharmila','borivali','sam@rediffmail.com',15000);
+     1 row created.
+
+SQL> insert into emp_15 values
+  2* ('a04','sweta','goregaon','swetakm@yahoo.com',16000);
+1 row created.
+
+SQL> insert into emp_15 values
+  2* ('a05','romil','parle','romil2u@yahoo.com',12000);
+1 row created.
+
+SQL>  1  insert into emp_15 values
+  2* ('a06','aarti','bandra','aartishah@yahoo.co.in',11500);
+1 row created.
+
+  SQL> insert into emp_15 values
+  2* ('a07','bikram','dahisar','bikram_punju@hotmail.com',10900);
+1 row created.
+
+SQL> insert into emp_15 values
+  2* ('a08','vaibhav','matunga','vaibhav_7ir@yahoo.com',19000);
+1 row created.
+
+SQL>  insert into emp_15 values
+  2* ('a09','dharmesh','poisar','dhirajbhatt@yahoo.co.in',7000);
+1 row created.
+
+SQL> insert into emp_15 values
+  2* ('a10','madhu','santacruz','sweetmadhu@rediffmail.com',16500);
+1 row created.
+
+SQL> select * from emp_15;
+
+Output:
+Emp_No       Ename      Addr                 Email                                             Sal
+------------  --------------- --------------- ---------------------------------   ---------------------
+a01                  ekta             borivali       eks@rediffmail.com                      15000
+a02                  anita            andheri       anitasakunde@hotmail.com           8900
+a03                  sharmila      borivali       sam@rediffmail.com                     15000
+a04                  sweta           goregaon    swetakm@yahoo.com                    16000
+a05                  romil            parle          romil2u@yahoo.com                      12000
+a06                  aarti             bandra        aartishah@yahoo.co.in                   11500
+a07                  bikram         dahisar        bikram_punju@hotmail.com         10900
+a08                  vaibhav        matunga      vaibhav_7ir@yahoo.com              19000
+a09                  dharmesh     poisar          dhirajbhatt@yahoo.co.in                7000
+a10 	       madhu          santacruz     sweetmadhu@rediffmail.com       16500
+10 rows selected.
+
+SQL> select * from update_15;
+
+Output:
+
+Emp_No    Old_Sal          Up_Sal         E_Date
+------------ --------------      ------------   ----------------
+a01                   		    15000         28-JAN-06
+a02                    		    8900           28-JAN-06
+a03                   	 	    15000         28-JAN-06
+a04	                          16000         28-JAN-06
+a05                 		    12000         28-JAN-06
+a06                      	    11500 	28-JAN-06
+a07                    		    10900 	28-JAN-06
+a08                     		    19000 	28-JAN-06
+a09                    		    7000 	28-JAN-06
+a10                   		    16500 	28-JAN-06
+10 rows selected.
+
+SQL> update emp_15
+  2  set sal=20000
+  3* where emp_no='a01';
+
+1 row updated.
+
+SQL>  update emp_15
+  2  set sal=22000
+  3* where emp_no='a01';
+
+1 row updated.
+SQL> update emp_15
+  2  set sal=17500
+  3* where emp_no='a03';
+
+1 row updated.
+
+SQL>  update emp_15
+  2  set sal=18000
+  3* where emp_no='a03';
+
+1 row updated.
+
+
+SQL>  update emp_15
+  2  set sal=19000
+  3* where emp_no='a03';
+
+1 row updated.
+
+SQL>  update emp_15
+  2  set sal=9700
+  3* where emp_no='a02';
+1 row updated.
+
+SQL> update emp_15
+  2  set sal=18100
+  3* where emp_no='a04';
+1 row updated.
+
+SQL> update emp_15
+  2  set sal=13000
+  3* where emp_no='a05';
+1 row updated.
+SQL> select * from update_15;
+
+Output:
+Emp_No    Old_Sal          Up_Sal        E_Date
+------------ --------------      ------------   ----------------
+a01                   		    15000         28-JAN-06
+a02                    		    8900           28-JAN-06
+a03                   	 	    15000         28-JAN-06
+a04	                          16000         28-JAN-06
+a05                 		    12000         28-JAN-06
+a06                      	    11500 	28-JAN-06
+a07                    		    10900 	28-JAN-06
+a08                     		    19000 	28-JAN-06
+a09                    		    7000 	28-JAN-06
+a10                   		    16500 	28-JAN-06
+a01 	     15000           20000 	28-JAN-06
+a01                20000           22000	28-JAN-06
+a03                15000           17500 	28-JAN-06
+a03                17500           18000 	28-JAN-06
+a03                18000           19000 	28-JAN-06
+a02                8900             9700	28-JAN-06
+a04                16000           18100 	28-JAN-06
+a05                12000           13000 	28-JAN-06
+
+18 rows selected.
+
+
+
+
+
+Firing queries on the created tables
+
+a)	Display the latest salary of all the employees.
+
+SQL>  select emp_no,up_sal from update_15
+  2  where up_sal in(select max(up_sal)"Latest Salary"
+  3* from update_15 group by emp_no);
+
+Output:
+Emp_No        Up_Sal
+-------------  -----------------
+a09         		7000
+a02         		9700
+a07        		10900
+a06        		11500
+a05        		13000
+a10        		16500
+a04        		18100
+a08        		19000
+a03        		19000
+a01        		22000
+
+10 rows selected.
+
+b) Display employee name that has got more than 2 user events.
+
+SQL>  select a.ename,b.emp_no,count(b.emp_no)"User Event"
+  2  from emp_15 a,update_15 b
+  3  where a.emp_no=b.emp_no group by b.emp_no,a.ename having
+  4* count(b.emp_no)>2;
+
+Output:
+Ename              Emp_N      User Event
+-------------------  ------------- ----------------
+ekta                         a01                 3
+sharmila                  a03                 4
+
+
+b)	Display employee name that has got an increment of 5000 in one
+ increment. 
+
+ SQL>  select a.emp_no,b.ename from update_15 a,emp_15 b
+  2* where a.up_sal - a.old_sal>=5000 and a.emp_no=b.emp_no;
+
+Output:
+
+Emp_N Ename
+----- -------------------------
+a01   ekta
+
+c)	Display employee name and salary of all the employees at second
+ increment.
+
+SQL>  select e1.ename"Ename",
+  2  e1.sal"salary",
+  3  e2.up_sal"Increment"
+  4  from emp_15 e1,(select emp_no, count(*) up_sal from update_15
+  5  group by emp_no) e2 where e1.emp_no = e2.emp_no
+  6* and up_sal=2;
+Output:
+Ename               salary       Increment
+----------------  ------------- ---------------
+anita                     9700           2
+sweta                   18100          2
+romil                   13000           2
+
+e)Display employee name, total salary and total increment.
+
+      SQL> select a.ename,b.emp_no,min(b.up_sal)"Initial Salary",
+          2  max(b.up_sal)"Latest Salary",max(b.up_sal)-min(b.up_sal)"total incr",
+          3  count(b.up_sal)-1 "Increments"
+          4  from emp_15 a,update_15 b where a.emp_no=b.emp_no
+          5* group by b.emp_no,a.ename;
+
+Output:
+
+ENAME       EMP_N    Initial Salary     Latest Salary    Total Incr       Increments
+-------------  ------------ ------------------   ---------------- ----------------  ----------------
+ekta             a01            15000                   22000               7000                    2
+anita            a02              8900                    9700                800                      1
+sharmila      a03            15000                   19000               4000                    3
+sweta          a04             16000                   18100               2100                    1
+romil          a05             12000                   13000               1000                     1
+aarti            a06             11500                   11500                  0                       0
+bikram        a07             10900                   10900                  0                       0
+vaibhav       a08             19000                   19000                  0                       0
+dharmesh    a09             7000                      7000                   0                       0  
+madhu         a10             16500                   16500                  0                       0
+ 
+10 rows selected.
+
+
+
+
+
+
+
+
+
+
+Pract7-A
+Title: Active Databases
+
+Question: Create table emp (eno, ename, hrs, pno, super_no) and project (pname, pno, thrs, head_no) where thrs is the total hours and is the derived attribute. Its value is the sum of all employees working on that project. eno and pno are primary keys, head_no is foreign key to emp relation. Insert 10 tuples and write triggers to do the following:
+
+a)	Creating a trigger to insert new employee tuple and display the new total hours from project table.
+b)	Creating a trigger to change the hrs of existing employee and display the new total hours from project table.
+c)	Creating a trigger to change the project of an employee and display the new total hours from project table.
+d)	Creating a trigger to delete the project of an employee.
+
+
+Database Link :
+
+Execute this command from bomb1
+Create database link link4bomb2 connect to scott identified by tiger using bomb2
+
+Execute this command from bomb2
+Create database link link4bomb1 connect to scott identified by tiger using bomb1
+
+Setup:
+ 
+
+
+
+
+Trigger Syntax
+
+CREATE TRIGGER <TRIGGER NAME>
+(BEFORE|AFTER)<TRIGGERING EVENT> ON <TABLE NAME>	
+FOR EACH (ROW|STATEMENT)
+[WHEN (CONDITION)]
+PL/SQL BLOCK.
+
+Consider the following relations
+
+                        Empl
+Attribute Name	   Data Type
+Eno	Number(3)(P.K)
+Ename	Varchar(25)
+Hrs	Number
+Pno	Number
+Super_no	Number
+                       Project
+Attribute Name	   Data Type
+ Pname	Varchar2(20)
+ Pno	Number(P.K)
+Thrs	Number
+Super_no	Number
+Create different Types and Tables 
+
+SQL> create table Empl(
+  2  eno number(8) primary key,
+  3  ename varchar(20),
+  4  hrs number(8),
+  5  pno number(8),
+  6  super_no number(8) CONSTRAINT sup UNIQUE
+  7* )
+SQL> /
+
+Table created.
+
+SQL> create table project(
+  2  pno number(8) primary key,
+  3  pname varchar(20),
+  4  thrs number(8),
+  5  super_no number(8) CONSTRAINT supfk references empl(super_no)
+  6* )
+SQL> /
+
+Table created.
+
+
+Insertion of different values in the tables
+
+Table Name1: Empl 
+Format         : Empl(eno, ename, hrs, pno , super_no)
+
+
+SQL>  insert into Empl values(1,'ekta',7,10,1001);
+1 row created.
+
+SQL> insert into Empl values(2,'sweta',5,20,1002);
+1 row created.
+
+SQL> insert into Empl values(3,'sharmila',3,10,1003);
+1 row created.
+
+SQL> insert into Empl values(4,'anita',1,20,1004);
+1 row created.
+
+SQL> insert into Empl values(5,'sandeep',5,30,1005);
+1 row created.
+
+SQL> insert into Empl values(6,'gautam',8,40,1006);
+1 row created.
+
+SQL> insert into Empl values(7,'akshay',3,30,1007);
+1 row created.
+
+SQL>insert into Empl values(8,'sagar',12,40,1008);
+1 row created.
+
+SQL> insert into Empl values(9,'aarti',1,10,1009);
+1 row created.
+
+SQL> insert into Empl values(10,'bhakti',9,20,1010);
+1 row created.
+
+ Table Name2: Project 
+Format         : Project(pno, pname, thrs ,super_no)
+     
+SQL> insert into project values(10,'distributed',10,1001);
+1 row created.
+               
+SQL> insert into project values(20,'parallel',6,1002);
+1 row created.     
+     
+
+SQL> insert into project values(30,'active',5,1005);
+1 row created.
+ 
+SQL> insert into project values(40,'temporal',5,1008);
+1 row created.
+       
+Firing queries on the created tables
+      
+Create trigger according to events specified.
+
+a)	Creating a trigger to insert new employee tuple and display the new total hours from project table.
+
+Event1:      Insert a new employee tuple
+Event:        New Employee is assigned to a project
+Condition: pno value is not Null when emp is assigned to
+                          a project
+      Action:      update the total thrs of project by adding hrs to old thrs.
+
+     Trigger: 
+
+SQL> create or replace Trigger thrs
+  2  after insert on empl
+  3  for each row
+  4  when(New.pno IS NOT NULL)
+  5  begin
+  6  update project
+  7  set thrs=thrs + :New.hrs
+  8  where pno=:New.pno;
+  9* end;
+SQL> /
+
+Trigger created.
+                 
+/*Inserting values in empl to so that trigger will be fired on project table &will update thrs value since trigger is fired after inserting value in empl table*/
+
+SQL> insert into empl values(11,'nancy',4,30,1011);
+1 row created. 
+  
+Output:
+
+    SQL> select * from project;
+
+       PNO       PNAME            THRS   SUPER_NO
+     ---------- ------------------- ---------- -----------------
+        10        distributed             10           1001
+        20         parallel                  6            1002
+        30         active                     9           1005
+        40         temporal                5           1008	
+
+b)	Creating a trigger to change the hrs of existing employee and display the new           total hours from project table.
+
+Event2:	Changing the hrs of existing employee.
+Event:	employee is assigned new hrs
+Condition:	pno value is not NULL when emp is assigned new hrs.
+Action:	update thrs of project by adding hrs to thrs & subtract old hrs from it.
+
+Trigger:
+
+            SQL> create Trigger thrs1
+  2  after update of hrs on empl
+  3  for each row
+  4  when(New.pno IS NOT NULL)
+  5  begin
+  6  update project
+  7  set thrs=thrs+:New.hrs-:Old.hrs
+  8  where pno=:New.pno;
+  9* end;
+SQL> /
+
+Trigger created.
+
+SQL>  update empl
+2  set hrs=10
+3* where eno=11
+SQL> /
+1 row updated.
+Ouput:
+
+SQL> select * from project;
+
+       PNO       PNAME            THRS   SUPER_NO
+     ---------- ------------------- ---------- -----------------
+        10        distributed             10           1001
+        20         parallel                  6            1002
+        30         active                    15           1005
+        40         temporal                5            1008
+
+C) Creating a trigger to change the project of an employee and display the new total hours from project table
+
+Event3:	Changing the project of an employee.
+Event:	Change of Project
+Condition:	No condition
+Action:	update the thrs of new project by adding new hrs & subtract old hrs from thrs from old project.
+
+
+
+
+
+
+
+
+
+
+Trigger:
+
+SQL> create Trigger thrs2
+  2  after update of pno on empl
+  3  for each row
+  4  when(New.pno IS NOT NULL)
+  5  begin
+  6  update project
+  7  set thrs=thrs+:New.hrs-:Old.hrs
+  8  where pno=:New.pno;
+  9* end;
+SQL> /
+
+Trigger created.
+ 
+  SQL>  update empl
+  2  set pno=10
+  3* where eno=2
+  SQL> /
+  1 row updated.
+  
+  SQL> update empl 
+  2  set pno=20
+3  where eno=7;
+ 1 row updated.
+
+Output: 
+
+Same output for 2 update:
+
+SQL> select * from project;
+
+       PNO       PNAME            THRS   SUPER_NO
+     ---------- ------------------- ---------- -----------------
+        10        distributed             10           1001
+        20         parallel                  6            1002
+        30         active                    15           1005
+        40         temporal                5            1008
+
+   d) Creating a trigger to delete the project of an employee.
+
+     		Event4:	Deleting 1 or more project of an employee.
+Event:		Deleting the project.
+Condition:	OLD.pno is not NULL.
+Action:		update the thrs by subtracting old hrs.
+
+
+
+
+
+Trigger:
+         
+SQL> create trigger thrs4
+  2  after delete on empl
+  3  for each row
+  4  when(OLD.pno IS NOT NULL)
+  5  begin
+  6  update project
+  7  set thrs=thrs-:OLD.hrs
+  8  where pno=:OLD.pno;
+  9* end;
+SQL> /
+Trigger created.
+
+           SQL> delete from empl where eno=11;
+           1 row deleted.
+
+Output:
+
+SQL> select * from project;
+       PNO       PNAME            THRS   SUPER_NO
+     ---------- ------------------- ---------- -----------------
+        10        distributed             10           1001
+        20         parallel                  6            1002
+        30         active                     5           1005
+        40         temporal                5            1008
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract7-B
+Title: Active Databases
+
+Question: Create table stud1 (roll_no,name) and stud2 (roll_no,name) .
+Insert 10 tuples and write triggers to do the following:
+
+a)	Create a trigger such that when a student record is inserted into the table stud1, the same record should be inserted into the table stud2.
+
+
+Setup:
+
+ Consider the following tables
+
+                          Stud1
+Attribute Name	   Data Type
+ Roll_No	Number(5)
+Sname	Varchar2(20)
+                       Stud2
+Attribute Name	   Data Type
+Roll_No	Number(5)
+Sname	Varchar2(20)
+  
+ 
+                                    
+
+
+
+
+
+
+
+
+
+Create different Types and Tables
+
+SQL> create table stud1
+  2  (
+  3  roll_no number(5),
+  4  sname varchar2(20)
+  5  )
+  6  /
+
+Table created.
+
+SQL> create table stud2
+  2  (
+  3  roll_no number(5),
+  4  sname varchar2(20)
+  5  )
+  6  /
+
+Table created.
+
+Firing queries on the created tables
+
+a) Create a trigger such that when a student record is inserted into the table stud1, the same record should be inserted into the table stud2.
+
+Event1:	 Insert a new Student tuple
+Event:	 New roll number is assigned to a student
+Condition: No condition
+Action: 	 insert the same record in stud2 table also.
+
+Trigger: 
+
+SQL> create or replace trigger stud
+  2  after insert on stud1
+  3  for each row
+  4  begin
+  5  insert into stud2 values(:new.roll_no,:new.sname);
+  6  end;
+  7  /
+Trigger created.
+
+Insertion of different values in the tables
+
+Table Name1: stud1 
+Format         : stud1(roll_no, sname)
+
+SQL> insert into stud1 values(1,'ekta');
+1 row created.
+
+
+SQL> insert into stud1 values(2,'sweta');
+1 row created.
+
+SQL> insert into stud1 values(3,'sharmila');
+1 row created.
+
+Output:
+
+SQL> select * from stud1;
+
+   ROLL_NO    SNAME
+  --------------  --------------------
+         1                ekta
+         2                sweta
+         3                sharmila
+
+SQL> select * from stud2;
+
+   ROLL_NO    SNAME
+  --------------  --------------------
+         1                ekta
+         2                sweta
+         3                sharmila
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract7-C
+Title: Active Databases
+
+Question: Create a table emp(dept_no,eno,ename,salary) and a table dept(dept_no,total_sal) where the employee table stores the list of employees belonging to which department and their respective salaries. The dept table shows the total salary given to all the employees belonging to the same department.
+Insert 10 tuples and write triggers to do the following:
+
+a)	Create a trigger such that on insert of record in the emp table the salaries of employees belonging to the same department should get added in the dept table.
+b)	Create a trigger such that if a record is deleted from the emp table then the salary of the respective employee belonging to a specific department should get deducted from the dept table.
+
+Setup:
+ 
+Consider the following tables
+
+
+                          Empd
+Attribute Name	   Data Type
+ Dept_no	Varchar2(5)
+Eno	Varchar2(5)
+Ename	Varchar2(20)
+Salary	Number(10)
+                       Deptd
+Attribute Name	   Data Type
+Dept_no	Varchar2(5)
+Total_sal	Number(10)
+
+
+
+
+
+
+Create different Types and Tables
+SQL> create table empd
+  2  (
+  3  dept_no varchar2(5),
+  4  eno varchar2(5),
+  5  ename varchar2(20),
+  6  salary number(10)
+  7  );
+
+Table created.
+
+SQL> create table deptd
+  2  (
+  3  dept_no varchar2(5),
+  4  total_sal number(10)
+  5* )
+SQL> /
+
+Table created.
+
+Insertion of different values in the tables
+
+Table Name1: deptd
+Format        : deptd (dept_no, total_sal)
+
+SQL> insert into deptd values('a1',0);
+1 row created.
+
+SQL> insert into deptd values(‘b1',0);
+1 row created.
+
+SQL> insert into deptd values('c1',0);
+1 row created.
+Table Name2: empd
+Format        : empd (dept_no, eno , ename , salary)
+
+SQL> insert into empd values('a1','a01','ekta',10000);
+1 row created.
+
+SQL> insert into empd values('a1','a02','sharmila',8000);
+1 row created.
+
+SQL> insert into empd values('b1','b01','sweta',5000);
+1 row created.
+
+SQL> insert into empd values('b1','b02','anita',5000);
+1 row created.
+
+
+
+Firing queries on the created tables
+
+
+a)	Create a trigger such that on insert of record in the empd table the salaries of employees belonging to the same department should get added in the dept table.
+
+Event1:	Insert a new Employee tuple
+Event:		Department number is assigned to that particular employee
+Condition: 	Department number is not null
+Action :	Insert the total salary into the deptd table by adding the salaries of all employees belonging to the same department
+
+Trigger: 
+
+ 	SQL>create or replace trigger ins
+  2  after insert on empd
+  3  for each row
+  4  when(new.dept_no is not null)
+  5  update deptd
+  6  set total_sal=total_sal+:new.salary
+  7* where dept_no=:new.dept_no
+SQL> /
+
+Trigger created.
+
+Output:
+
+SQL> select * from empd;
+
+DEPT_ NO       ENO       ENAME     SALARY
+---------------   ---------      -----------  ----------------
+  a1                    a01            ekta               10000
+  a1                    a02            sharmila        8000
+  b1                    b01            sweta            5000
+  b1                    b02            anita              5000
+
+
+
+SQL> select * from deptd;
+
+DEPT_NO            TOTAL_SAL
+---------------    -------------------------
+a1                             18000
+b1                             10000
+c1                              0
+
+
+b)	Create a trigger such that if a record is deleted from the emp table then the salary of the respective employee belonging to a specific department should get deducted from the dept table.
+
+Event2:	  Delete an existing Employee tuple
+Event:	Total Salary given to the employees of that particular department is calculated
+Condition: Employee number is not null
+Action:	the salary of that particular employee belonging to a specific department            should be deducted from the total salary of department table
+
+Trigger: 
+
+SQL> create or replace trigger del
+  2  after delete on empd
+  3  for each row
+  4  when(old.eno is not null)
+  5  update deptd
+  6  set total_sal=total_sal-:old.salary
+  7  where dept_no=:old.dept_no
+8	/
+
+Trigger created.
+
+SQL> delete from empd where eno='b02';
+1 row deleted.
+
+Output:
+
+SQL> select * from empd;
+
+DEPT_ NO       ENO       ENAME     SALARY
+---------------   ---------      -----------  ----------------
+  a1                    a01            ekta               10000
+  a1                    a02            sharmila        8000
+  b1                    b01            sweta            5000
+
+SQL> select * from deptd;
+
+DEPT_NO            TOTAL_SAL
+---------------    -------------------------
+a1                             18000
+b1                             5000
+c1                              0
+
+
+
+
+Pract7 – C
+Title: Active Database
+
+Question: Create a global conceptual schema employee_details(empid, deptno, ename, salary, entrydate) and dept_details(deptno, dname). The active database rules for the schema employee_details should be maintained in: emp_dept_active(deptno, total_salary, month, max_salary, min_salary, emp_count). Insert records.
+
+Note: for the purpose of maintaining active rules, trigger is used based on Event – Condition – Action model.
+
+Table creation:
+
+create table employee_details
+    (
+     empid number,
+     deptno number,
+     ename varchar2(20),
+     salary number,
+     entrydate date
+    );
+
+ create table dept_details
+(
+ deptno number,
+ dname varchar2(20)
+);
+
+Note: following is the active table.
+
+ create table emp_dept_active
+    (
+     deptno number,
+    total_salary number,
+     month varchar2(20),
+     min_salary number,
+    max_salary number,
+     emp_count number
+   );
+
+
+
+
+
+
+
+
+
+
+Trigger creation:
+
+create or replace trigger employee_trigger
+  before insert on employee_details
+  for each row
+  declare
+  total_sal number;
+  minsal number; 
+  empcount number;
+  dept number;
+  tempmonth varchar2(20);
+
+  begin
+ 
+  tempmonth  :=   to_char(extract(MONTH from :new.entrydate));
+
+  select count(rowid) into dept from emp_dept_active where deptno = :new.deptno and month = tempmonth;
+  
+  if dept <> 0   then
+
+  select sum(salary) into total_sal from employee_details where deptno = :new.deptno and to_char(extract(MONTH from entrydate)) = tempmonth;
+
+  total_sal := total_sal + :new.salary;
+
+  select min(salary) into minsal from employee_details where deptno = :new.deptno and to_char(extract(MONTH from entrydate)) = tempmonth;
+  
+  update emp_dept_active set total_salary = total_sal,min_salary = minsal,max_salary = total_sal,  emp_count =   emp_count + 1 where deptno = :new.deptno and month = tempmonth;
+
+  else
+   total_sal := :new.salary;
+  empcount := 1;
+  dept := :new.deptno;
+  insert into emp_dept_active values(dept,total_sal,tempmonth,total_sal,total_sal,empcount);
+  end if;
+  end;
+
+Creation of rows:
+
+insert into dept_details values(10,'Purchase');
+insert into dept_details values(20,'Sales');
+
+insert into employee_details(empid,deptno,ename,salary,entrydate) values(1,10,'Hemant',2000,sysdate);
+insert into employee_details(empid,deptno,ename,salary,entrydate) values(2,10,'Manju',2000,sysdate);
+insert into employee_details(empid,deptno,ename,salary,entrydate) values(3,20,'Nareshchandra',2000,sysdate-31);
+insert into employee_details(empid,deptno,ename,salary,entrydate) values(4,20,'Eshwar',2000,sysdate-32);
+
+insert into employee_details(empid,deptno,ename,salary,entrydate) values(5,10,'Himanshu',3500,sysdate);
+insert into employee_details(empid,deptno,ename,salary,entrydate) values(6,10,'Mandar',2500,sysdate);
+insert into employee_details(empid,deptno,ename,salary,entrydate) values(7,20,'Naren',7500,sysdate-31);
+insert into employee_details(empid,deptno,ename,salary,entrydate) values(8,20,'Karan',2000,sysdate-32);
+
+Firing Queries:
+
+Query 1: Display the month name where the total salary is highest.
+
+SQL>  select decode(month,
+              1,'JANUARY',
+              2,'FEBRUARY',
+              3,'MARCH',
+              4,'APRIL',
+              5,'MAY',
+              6,'JUNE',
+              7,'JULY',
+              8,'AUGUST',
+              9,'SEPTEMBER',
+              10,'OCTOBER',
+              11,'NOVEMBER',
+              12,'DECEMBER') as "Month",total_salary as "Max total salary" from emp_dept_active where total_salary = (select max(total_salary) from emp_dept_active);
+
+Output:
+
+Month     Max total salary
+--------- ----------------
+DECEMBER             13500
+
+
+
+
+
+
+
+
+
+Query 2: Display total salary of sales dept for ‘DECEMBER’ month
+
+SQL>  select  b.dname as "Dept",decode(a.month,
+              1,'JANUARY',
+              2,'FEBRUARY',
+              3,'MARCH',
+              4,'APRIL',
+              5,'MAY',
+              6,'JUNE',
+              7,'JULY',
+              8,'AUGUST',
+              9,'SEPTEMBER',
+              10,'OCTOBER',
+              11,'NOVEMBER',
+              12,'DECEMBER') as "Month",a.total_salary as "Total salary" from emp_dept_active a, dept_details b where a.deptno = b.deptno and b.dname = 'Sales';
+
+Output:
+
+Dept                 Month     Total salary
+-------------------- --------- ------------
+Sales                DECEMBER         13500
+
+Query 3: Display quarterly average salary for purchase department.
+
+SQL> select  avg(a.total_salary)*1/4 as "Quarterly Average salary", b.dname as "Dept" from emp_dept_active a,  dept_details b where a.deptno = b.deptno and b.dname = 'Purchase' group by b.dname
+
+Output:
+
+Quarterly Average salary Dept
+------------------------ --------------------
+                    2500             Purchase
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract8-A
+Title: XML   DATABASE
+
+Question: Create a table employee having dept_id as number datatype and employee_spec as XML datatype(XM_Type). The employee_spec is a schema with attributes emp_id, name, email, acc_no, managerEmail, dataOf Joning. Insert 10 tuples into employee table. Fire the following queries on XML database.
+
+a)	Retrieve the names of employee.
+b)	Retrieve the acc_no of employees.
+c)	Retrieve the names, acc_no, email of employees.
+d)	Update the 3rd record from the table and display the name of an employee.
+e)	Delete 4th record from the table.
+
+
+XML TYPE:
+•	XMLType can be used in PL/SQL stored procedures as parameters, return values, and variables. 
+•	XMLType can represent an XML document as an instance (of XMLType) in SQL. 
+•	XMLType has built-in member functions that operate on XML content. For example, you can use XMLType functions to create, extract, and index XML data stored in Oracle9i database. 
+•	Functionality is also available through a set of Application Program Interfaces (APIs) provided in PL/SQL and Java. 
+With XMLType and these capabilities, SQL developers can leverage the power of the relational database while working in the context of XML. Likewise, XML developers can leverage the power of XML standards while working in the context of a relational database.
+XMLType datatype can be used as the datatype of columns in tables and views. Variables of XMLType can be used in PL/SQL stored procedures as parameters, return values, and so on. You can also use XMLType in SQL, PL/SQL, and Java (through JDBC).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Setup:
+ 
+Create different Types and Tables 
+
+SQL> create table emp_xml15(
+2   dept_id number(4),
+3* employee_spec XMLtype)
+SQL> /
+Table created.
+
+Insertion of different values in the tables
+
+Table Name1: emp_xml15
+Format        : emp_xml15 (dept_id, employee_spec)
+
+SQL> insert into emp_xml15 values(1,XMLtype(
+  2  '<emp id="1">
+  3  <name> sharmila </name>
+  4  <email>dave@yahoo.com</email>
+  5  <acc_no>23456</acc_no>
+  6  <mgr_email>rekha.shah@hotmail.com</mgr_email>
+  7  <doj>12/12/2003</doj>
+  8* </emp>'))
+SQL> /
+1 row created.
+
+SQL>  insert into emp_xml15 values(1,XMLtype(
+  2  '<emp id="2">
+  3  <name> anita </name>
+  4  <email>ani@yahoo.com</email>
+  5  <acc_no>234346</acc_no>
+  6  <mgr_email>rekha.shah@hotmail.com</mgr_email>
+  7  <doj>2/6/2003</doj>
+  8* </emp>'))
+SQL> /
+1 row created.
+
+SQL>  insert into emp_xml15 values(1,XMLtype(
+  2  '<emp id="3">
+  3  <name> ekta </name>
+  4  <email>ektabhatt@yahoo.com</email>
+  5  <acc_no>2343456</acc_no>
+  6  <mgr_email>ekta.bhatt@hotmail.com</mgr_email>
+  7  <doj>24/5/2001</doj>
+  8* </emp>'))
+SQL> /
+1 row created.
+
+SQL> insert into emp_xml15 values(1,XMLtype(
+  2  '<emp id="4">
+  3  <name> nancy </name>
+  4  <email>nancyshah@yahoo.com</email>
+  5  <acc_no>2343678</acc_no>
+  6  <mgr_email>ekta.shah@hotmail.com</mgr_email>
+  7  <doj>21/5/2002</doj>
+  8* </emp>'))
+SQL> /
+1 row created.
+
+SQL> insert into emp_xml15 values(1,XMLtype(
+  2  '<emp id="5">
+  3  <name> falguni </name>
+  4  <email>falgunishah@yahoo.com</email>
+  5  <acc_no>2343345</acc_no>
+  6  <mgr_email>falguni.shah@hotmail.com</mgr_email>
+  7  <doj>1/8/2002</doj>
+  8* </emp>'))
+SQL> /
+1 row created.
+
+SQL> insert into emp_xml15 values(1,XMLtype(
+  2  '<emp id="6">
+  3  <name> sweta </name>
+  4  <email>swetamehta@yahoo.com</email>
+  5  <acc_no>2343890</acc_no>
+  6  <mgr_email>sweta.mehta@hotmail.com</mgr_email>
+  7  <doj>2/1/2001</doj>
+  8* </emp>'))
+SQL> /
+1 row created.
+
+SQL> insert into emp_xml15 values(2,XMLtype(
+  2    '<emp id="7">
+  3     <name> aarti </name>
+  4     <email>aartigupta@yahoo.com</email>
+  5     <acc_no>23433898</acc_no>
+  6     <mgr_email>falguni.shah@hotmail.com</mgr_email>
+  7     <doj>4/9/2002</doj>
+  8*   </emp>'))
+SQL> /
+1 row created.
+
+SQL> insert into emp_xml15 values(2,XMLtype(
+  2    '<emp id="8">
+  3     <name> sandy </name>
+  4     <email>sagupta@yahoo.com</email>
+  5     <acc_no>23567898</acc_no>
+  6     <mgr_email>sweta.shah@hotmail.com</mgr_email>
+  7     <doj>4/4/2004</doj>
+  8*   </emp>'))
+SQL> /
+1 row created.
+
+Firing queries on the created tables
+
+a) Retrieve the names of employee:
+
+SQL> select e.employee_spec.extract('//name/text()').getStringVal() "EMP_NAME" from emp_xml15 e;
+
+Output:
+
+EMP_NAME
+--------------------------------------------------------------------------------
+sharmila
+anita
+ekta
+nancy
+falguni
+sweta
+aarti
+sandy
+
+8 rows selected.
+
+b) Retrieve the acc_no of employees:
+
+SQL>select e.employee_spec.extract('//acc_no/text()').getStringVal()
+          2* "Acc_No" from emp_xml15 e;
+
+Output:
+
+Acc_No
+------------------------------------------------------------------------------
+23456
+234346
+2343456
+2343678
+2343345
+2343890
+23433898
+23567898
+
+8 rows selected.
+
+c) Retrieve the names, acc_no, email of employees:
+
+SQL> select e.employee_spec.extract('//name/text()').getStringVal()
+2 "NAME",e.employee_spec.extract('//acc_no/text()').getStringVal()
+3 "ACC_NO",e.employee_spec.extract('//email/text()').getStringVal()
+4 "EMAIL" from emp_xml15 e
+5 /
+
+Output:
+
+NAME                       ACC_NO                             EMAIL
+--------------------------------------------------------------------------------
+sharmila                      23456                             dave@yahoo.com
+anita                            234346                           ani@yahoo.com
+ekta                             2343456                         ektabhatt@yahoo.com
+nancy                          2343678                         nancyshah@yahoo.com
+falguni                        2343345                         falgunishah@yahoo.com
+sweta                          2343890                         swetamehta@yahoo.com
+aarti                            23433898                       aartigupta@yahoo.com
+sandy                          23567898                       sagupta@yahoo.com
+
+8 rows selected.
+
+d) Update the 3rd record from the table and display the name of an employee:
+
+SQL> update emp_xml15 e set employee_spec=XMLtype('<emp id="3">
+  2  <name> ekta </name>
+  3  <email>ektabhatt@yahoo.com</email>
+  4  <acc_no>2343456</acc_no>
+  5  <mgr_email>ekta.bhatt@hotmail.com</mgr_email>
+  6  <doj>24/5/2001</doj>
+  7  <update>This is the updated record</update>
+  8  </emp>')
+  9  where
+ 10  e.employee_spec.extract('//name/text()').getStringVal()
+ 11* ='ekta'
+SQL> /
+1 row updated.
+SQL>  select e.employee_spec.extract('//name/text()').getStringVal()"NAME",
+  2  e.employee_spec.getClobVal() "EMP_SPECIFICATION"
+  3  from emp_xml15 e where
+  4* e.employee_spec.extract('//name/text()').getStringVal()='ekta '
+SQL> /
+
+Output:
+
+NAME
+-------------------------------------------------------------------------------
+EMP_SPECIFICATION
+-------------------------------------------------------------------------------
+ekta
+<emp id="3">
+<name> ekta </name>
+<email>ektabhatt@yahoo.com</email>
+<acc_no>2343456</acc_no>
+<mgr_email>ekta.bhatt@hotmail.com</mgr_email>
+<doj>24/5/2001</doj>
+<update>This is the updated record</update>
+</emp>
+e) Delete the 4th record from the table:
+
+SQL> delete from emp_xml15 e
+2  where e.employee_spec.extract('//name/text()').getStringVal()
+3* ='nancy '
+SQL> /
+1 row deleted.
+
+SQL> select e.employee_spec.extract('//name/text()').getStringVal() "NAME" from
+  2* emp_xml151 e
+SQL> /
+
+Output:
+
+NAME
+--------------------------------------------------------------------------------
+sharmila
+anita
+ekta
+falguni
+sweta
+aarti
+6 rows selected.
+
+
+
+
+
+
+Pract8-B 
+Title: XML   DATABASE
+
+Question: Create a table candidate having cand_id as varchar2 datatype and biodata as XML datatype ( XML type). The biodata is a schema with attributes 
+Name, address, skill – compskill – 1) language  2) networking, expr – 1) prog 2) prjmgr, objectives. Fire the following queries on XML database
+
+a) Display candidate name who is good in java and having experience more than 
+5 years
+
+b) Display candidate having project manager level experience
+
+
+c) Display name and skill of all candidates
+
+d) Delete record for address = borivali
+e) Update experience of a particular candidate
+
+
+Setup:
+ Create different Types and Tables
+
+SQL>Create table candidate(
+2   cand_id varchar(3) primary key,
+3* biodata xmltype)
+SQL> /
+Table created.
+
+
+
+Insertion of different values in the tables
+
+SQL> insert into candidate
+  2   values('C01',
+  3   xmltype(' <cand>
+  4                   <name>Ekta</name>
+  5                   <address>Vile Parle</address>
+  6                   <skill>
+  7                   <compskill>
+  8                   <lang>Java</lang>
+  9                   <networkskill>Windows 2000 server</networkskill>
+ 10                  </compskill>
+ 11                  </skill>
+ 12                  <expr>
+ 13                  <programmer>5</programmer>
+ 14                  <projectmgr>5</projectmgr>
+ 15                  </expr>
+ 16                  <Objectives> To be an Enterpreneur</Objectives>
+ 17                  </cand>'
+ 18*                 ));
+
+1 row created. 
+
+SQL> insert into candidate
+  2  values('C02',
+  3  xmltype(' <cand>
+  4                  <name>Sweta</name>
+  5                  <address>Dahisar</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>C</lang>
+  9                  <networkskill>Windows NT</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                <programmer>10</programmer>
+ 14                <projectmgr>3</projectmgr>
+ 15                </expr>
+ 16                <Objectives> To be a Project Manager</Objectives>
+ 17                </cand>'
+ 18*           ));
+
+1 row created.
+
+
+
+
+
+
+
+SQL> insert into candidate
+  2  values('C03',
+  3  xmltype(' <cand>
+  4                  <name>Sharmila</name>
+  5                  <address>Borivali</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>C</lang>
+  9                  <networkskill>Windows XP</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                 <programmer>10</programmer>
+ 14                 <projectmgr>5</projectmgr>
+ 15                 </expr>
+ 16                 <Objectives> To have my own software firm</Objectives>
+ 17                 </cand>'
+ 18*           ));
+
+1 row created.
+
+SQL> insert into candidate
+  2  values('C04',
+  3  xmltype(' <cand>
+  4                  <name>Anita</name>
+  5                  <address>Andheri</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>C++</lang>
+  9                  <networkskill>Windows 98</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                 <programmer>7</programmer>
+ 14                 <projectmgr>2</projectmgr>
+ 15                  </expr>
+ 16                  <Objectives> To make my knowledge to better use</Objectives>
+ 17                  </cand>'
+ 18*           ));
+
+1 row created.
+
+
+
+
+
+
+
+
+
+SQL> insert into candidate
+  2  values('C05',
+  3  xmltype(' <cand>
+  4                  <name>Nancy</name>
+  5                  <address>Bandra</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>VB</lang>
+  9                  <networkskill>Windows XP</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                 <programmer>5</programmer>
+ 14                 <projectmgr>1</projectmgr>
+ 15                 </expr>
+ 16                 <Objectives>To gain more knowledge</Objectives>
+ 17                 </cand>'
+ 18*           ));
+
+1 row created.
+
+ SQL> insert into candidate
+  2  values('C06',
+  3  xmltype(' <cand>
+  4                  <name>Falguni</name>
+  5                  <address>Vile Parle</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>Java</lang>
+  9                  <networkskill>Windows 2000 Professional</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                 <programmer>15</programmer>
+ 14                 <projectmgr>10</projectmgr>
+ 15                 </expr>
+ 16                 <Objectives>To design my own language</Objectives>
+ 17                 </cand>'
+ 18*           ));
+
+1 row created.
+
+
+
+
+
+
+
+
+
+SQL> insert into candidate
+  2  values('C07',
+  3  xmltype(' <cand>
+  4                  <name>Sandeep</name>
+  5                  <address>Goregaon</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>SQl</lang>
+  9                  <networkskill>Windows XP</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                 <programmer>18</programmer>
+ 14                 <projectmgr>12</projectmgr>
+ 15                 </expr>
+ 16                 <Objectives>To earn upto my needs</Objectives>
+ 17                 </cand>'
+ 18*           ));
+
+1 row created.
+SQL> insert into candidate
+  2  values('C08',
+  3  xmltype(' <cand>
+  4                  <name>Gautam</name>
+  5                  <address>Malad</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>Web designing</lang>
+  9                  <networkskill>Windows NT</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                 <programmer>20</programmer>
+ 14                 <projectmgr>15</projectmgr>
+ 15                 </expr>
+ 16                 <Objectives>Creative is my motive</Objectives>
+ 17                 </cand>'
+ 18*           ));
+
+1 row created.
+
+SQL> insert into candidate
+  2  values('C09',
+  3  xmltype(' <cand>
+  4                  <name>Akshay</name>
+  5                  <address>Kandivali</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>VB</lang>
+  9                  <networkskill>Windows 95</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                 <programmer>12</programmer>
+ 14                 <projectmgr>8</projectmgr>
+ 15                 </expr>
+ 16                 <Objectives>To learn and master VB</Objectives>
+ 17                 </cand>'
+ 18*           ));
+
+1 row created.
+
+SQL> insert into candidate
+  2  values('C10',
+  3  xmltype(' <cand>
+  4                  <name>Rayo</name>
+  5                  <address>Mumbai Central</address>
+  6                  <skill>
+  7                  <compskill>
+  8                  <lang>Java</lang>
+  9                  <networkskill>Windows XP</networkskill>
+ 10                 </compskill>
+ 11                 </skill>
+ 12                 <expr>
+ 13                 <programmer>21</programmer>
+ 14                 <projectmgr>15</projectmgr>
+ 15                 </expr>
+ 16                 <Objectives>To build a compiler some day in java</Objectives>
+ 17                 </cand>'
+ 18*           ));
+
+1 row created.
+
+
+Firing queries on the created tables
+
+a) Select names of candidates who have programming experience greater than 5 and language skills in java:
+                       
+SQL> select cand_id "ID",c.biodata.extract('cand/name/text()') "Name"
+  2  from candidate c where
+  3  c.biodata.extract('//expr/programmer/text()').getStringVal() >5 and
+  4* c.biodata.extract('//skill/compskill/lang/text()').getStringVal()='Java'
+SQL> /
+
+
+
+
+
+
+Output:
+
+ID
+---
+Name
+--------------------------------------------------------------------------------
+C06
+Falguni
+
+C10
+Rayo
+
+b) Display Candidate having project manager level experience:
+
+SQL> select c.extract(biodata,'/cand/name/text()')
+  2  " Candidate Name" from candidate c
+  3* where c.biodata.existsNode('/cand/expr[projectmgr>1]')=1
+SQL> /
+
+Output:
+
+Candidate Name
+--------------------------------------------------------------------------------
+Ekta
+Sweta
+Sharmila
+Anita
+Falguni
+Sandeep
+Gautam
+Akshay
+Rayo
+
+9 rows selected.
+
+c) Display Candidate Name and skills of all candidates:
+	
+SQL> select c.extract(biodata,'cand/name').getStringVal() "Name",
+  2  c.extract(biodata,'/cand/skill/compskill/lang').getStringVal() "Lang Known",
+  3  c.extract(biodata,'/cand/skill/compskill/networkskill').getStringVal() "NetworkSkill"
+  4* from candidate c
+SQL> /
+
+
+
+
+
+
+
+Output:
+
+Name
+--------------------------------------------------------------------------------
+Lang Known
+--------------------------------------------------------------------------------
+NetworkSkill
+--------------------------------------------------------------------------------
+<name>Ekta</name>
+<lang>Java</lang>
+<networkskill>Windows 2000 server</networkskill>
+
+<name>Sweta</name>
+<lang>C</lang>
+<networkskill>Windows NT</networkskill>
+
+Name
+--------------------------------------------------------------------------------
+Lang Known
+--------------------------------------------------------------------------------
+NetworkSkill
+--------------------------------------------------------------------------------
+
+<name>Sharmila</name>
+<lang>C</lang>
+<networkskill>Windows XP</networkskill>
+
+<name>Anita</name>
+<lang>C++</lang>
+
+Name
+--------------------------------------------------------------------------------
+Lang Known
+--------------------------------------------------------------------------------
+NetworkSkill
+--------------------------------------------------------------------------------
+<networkskill>Windows 98</networkskill>
+<name>Nancy</name>
+<lang>VB</lang>
+<networkskill>Windows XP</networkskill>
+
+<name>Falguni</name>
+
+Name
+--------------------------------------------------------------------------------
+Lang Known
+--------------------------------------------------------------------------------
+NetworkSkill
+--------------------------------------------------------------------------------
+<lang>Java</lang>
+<networkskill>Windows 2000 Professional</networkskill>
+
+<name>Sandeep</name>
+<lang>SQl</lang>
+<networkskill>Windows XP</networkskill>
+
+Name
+--------------------------------------------------------------------------------
+Lang Known
+--------------------------------------------------------------------------------
+NetworkSkill
+--------------------------------------------------------------------------------
+<name>Gautam</name>
+<lang>Web designing</lang>
+<networkskill>Windows NT</networkskill>
+
+<name>Akshay</name>
+<lang>VB</lang>
+<networkskill>Windows 95</networkskill>
+
+Name
+--------------------------------------------------------------------------------
+Lang Known
+--------------------------------------------------------------------------------
+NetworkSkill
+--------------------------------------------------------------------------------
+
+<name>Rayo</name>
+<lang>Java</lang>
+<networkskill>Windows XP</networkskill>
+
+10 rows selected.
+
+d) Delete record for address is Borivali:
+
+SQL> delete from candidate c
+  2* where c.biodata.extract('//address/text()').getStringVal()='Borivali';
+1 row deleted.
+
+SQL> select c.extract(biodata,'cand/name').getStringVal() "Name"
+  2* from candidate c
+SQL> /
+Output:
+
+Name
+--------------------------------------------------------------------------------
+<name>Ekta</name>
+<name>Sweta</name>
+<name>Anita</name>
+<name>Romil</name>
+<name>Mayank</name>
+<name>Sandeep</name>
+<name>Gautam</name>
+<name>Akshay</name>
+<name>Rayo</name>
+9 rows selected.
+
+e) Update Experience of Candidates where candidate-Id is ‘C10’:
+
+SQL> update candidate 
+2   set biodata=xmltype('<cand><expr><projectmgr>100</projectmgr></expr></cand>')   
+3* where cand_id='C01'
+SQL>/
+
+1 row updated.
+
+SQL> select e.biodata.getClobVal() "EMP_SPECIFICATION"
+  3  from candidate e where
+  4* e.cand_id='C01'
+SQL> /
+
+Output:
+
+EMP_SPECIFICATION
+--------------------------------------------------------------------------------
+<cand><expr><projectmgr>100</projectmgr></expr></cand>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pract8 – C
+Title: XML Database
+
+Question: Create a schema student_details having attributes studid as number datatype and student_spec as XMLType. The student_spec xml should have the following attributes: collegename, name, address, course, dept, professor
+
+Table creation:
+
+create table student_details (
+studid number,
+student_spec sys.XMLType
+);
+
+Creation of rows:
+
+insert into student_details values(1,sys.xmltype.createXML('
+<college name="SIES">
+<name>Hemant</name>
+<address>Kalina</address>
+<course>Msc in comp sci.</course>
+<dept name="Computer Science">
+<Professor id="1" HOD="no">Mohammed Abuzar</Professor>
+<Professor id="2" HOD="yes">Manoj singh</Professor>
+</dept>
+</college>'));
+
+insert into student_details values(2,sys.xmltype.createXML('
+<college name="SIES">
+<name>Ravindra</name>
+<address>Andheri</address>
+<course>Msc in Physics</course>
+<dept name="Physics">
+<Professor id="1" HOD="no">Vinod Menon</Professor>
+<Professor id="2" HOD="no">Venkatraman</Professor>
+</dept>
+</college>'));
+
+insert into student_details values(3,sys.xmltype.createXML('
+<college name="SIES">
+<name>Sunil</name>
+<address>Curry Road</address>
+<course>Msc in Computer Science</course>
+<dept name="Computer Science">
+<Professor id="1" HOD="no">Mohammed Abuzar</Professor>
+<Professor id="2" HOD="yes">Manoj Singh</Professor>
+</dept>
+</college>'));
+
+
+insert into student_details values(4,sys.xmltype.createXML('
+<college name="SIES">
+<name>Prashant</name>
+<address>Antop hill</address>
+<course>Msc in Computer Science</course>
+<dept name="Computer Science">
+<Professor id="1" HOD="no">Mohammed Abuzar</Professor>
+<Professor id="2" HOD="yes">Manoj Singh</Professor>
+</dept>
+</college>'));
+
+insert into student_details values(5,sys.xmltype.createXML('
+<college name="SIES">
+<name>Swapnil</name>
+<address>Kalina</address>
+<course>Msc in Physics</course>
+<dept name="Physics">
+<Professor id="1" HOD="no">Vinod Menon</Professor>
+<Professor id="2" HOD="yes">Venkatraman</Professor>
+</dept>
+</college>'));
+
+Firing Queries:
+
+Query 1: Display all student’s name.
+
+SQL>  select p.student_spec.extract('//name/text()').getStringVal() as "Student Names" from student_details p;
+
+Output:
+
+Student Names
+---------------------
+Hemant
+Ravindra
+Sunil
+Prashant 
+Swapnil
+
+Query 2: Display the course name of the student with id as 1.
+
+SQL> select p.student_spec.extract('//course/text()').getStringVal() as “Course" from student_details p where p.studid = 1
+
+Output:
+
+Course
+-------------
+Msc in comp sci.
+
+Query 3: Updating the name of student having id as 1
+
+SQL> update student_details p set p.student_spec = sys.xmltype.createXML('<college name="SIES">
+<name>Hemant N. Agrawal</name>
+<address>Kalina</address>
+<course>Msc in comp sci.</course>
+<dept name="Computer Science">
+<Professor id="1" HOD="no">Mohammed Abuzar</Professor>
+<Professor id="2" HOD="yes">Manoj singh</Professor>
+</dept>
+</college>') where p.studid = 1;
+
+SQL> select p.student_spec.extract('//name/text()').getStringVal() as "Name" from student_details p where p.studid = 1
+
+Output:
+
+Name
+----------------------------------
+Hemant N. Agrawal
+
+Query 4: Delete the record of student whose name is ‘Hemant N. Agrawal’
+
+SQL> delete from student_details p where p.student_spec.extract('//name/text()') like 'Hemant N. Agrawal'
+
+SQL> select p.student_spec.extract('//name/text()').getStringVal() as "Name" from student_details p
+
+Output: 
+
+Name
+------------
+Ravindra
+Sunil
+Prashant 
+Swapnil
+
+
+
+
+
+
+
+
+
+
+Pract9-A
+Title: Spatial database
+	
+Question: Create a spatial database that stores the number, name and location, which consists of four different areas say abc, pqr, mno and xyz. Fire the following queries. 
+1. Find the topological intersection of two geometries.
+
+2. Find whether two geometric figures are equivalent to each other. 
+3. Find the areas of all direction locations. 
+4. Find the area of only one location.
+5. Find the distance between two geometries.  
+
+
+Setup:
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+												
+						
+					
+												
+							
+				
+												
+
+			
+							
+							
+				
+												
+			
+	
+						
+												
+	
+	
+	
+						
+	
+		
+							
+												
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Creating Table: 
+
+SQL>create table university_15 (
+2 mkt_id number primary key,
+3 name varchar2(32),
+4 shape mdsys.sdo_geometry)
+5 \
+
+Table created.
+
+Inserting values in the tables:
+Table Name1: university_15
+Format         : university_15(mkt_id, name, shape)
+
+
+SQL> insert into university_15 values(
+1,
+'abc',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,3), -- one rectangle (1003 =exterior)
+mdsys.sdo_ordinate_array(1,1, 5,7) 
+-- only 2 points needed to
+-- define rectangle (lower left and upper right) with
+-- cartesian-coordinate data
+)
+)
+1 row created.
+
+SQL> insert into university_15 values(
+2,
+'pqr',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,1), 
+-- one polygon (exterior polygon ring)
+mdsys.sdo_ordinate_array(5,1, 8,1, 8,6, 5,7, 5,1)
+)
+)
+1 row created.
+
+
+
+
+SQL> insert into university_15 values(
+3,
+'mno',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,1), 
+-- one polygon (exterior polygon ring)
+mdsys.sdo_ordinate_array(3,3, 6,3, 6,5, 4,5, 3,3)
+)
+)
+1 row created.
+
+
+SQL>insert into university_15 values(
+4,
+’xyz’,
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,null,mdsys.sdo_elem_info_array(1,1003,4), -- one circle
+mdsys.sdo_ordinate_array(8,7, 10,9, 8,11)
+)
+)
+1 row created.
+
+
+SQL>insert into user_sdo_geom_metadata values (
+’university_15’,
+’shape’,
+mdsys.sdo_dim_array( 
+mdsys.sdo_dim_element(’x’, 0, 20, 0.005),
+mdsys.sdo_dim_element(’y’, 0, 20, 0.005)
+),
+null -- srid
+)
+1 row created.
+
+
+Creating index:
+
+create index university_spatial_idx
+on university_15(shape)
+indextype is mdsys.spatial_index;
+
+Index created.
+
+
+
+
+Firing queries on the created tables 
+
+1) Find the topological intersection of two geometries.
+
+
+SQL> select sdo_geom.sdo_intersection(c_a.shape, c_c.shape, 0.005)
+from university_15 c_a, university_15 c_c
+where c_a.name = 'abc' and c_c.name = 'mno';
+Output:
+
+sdo_geom.sdo_intersection(c_a.shape,c_c.shape,0.005)(sdo_gtype, sdo_srid, sdo_po
+
+--------------------------------------------------------------------------------
+sdo_geometry(2003, null, null, sdo_elem_info_array(1, 1003, 1), sdo_ordinate_arr
+
+ay(4, 5, 3, 3, 5, 3, 5, 5, 4, 5))
+
+
+2) Find whether two geometric figures are equivalent to each other.
+
+SQL>select sdo_geom.relate(c_b.shape, 'anyinteract', c_d.shape, 0.005)
+from university_15 c_b, university_15 c_d
+where c_b.name = 'pqr' and c_d.name = 'xyz';
+
+Output:
+sdo_geom.relate(c_b.shape,'anyinteract',c_d.shape,0.005)
+---------------------------------------------------------
+false
+SQL>select sdo_geom.relate(c_b.shape, 'anyinteract', c_a.shape, 0.005)
+from university_15 c_b, university_15 c_a
+where c_b.name = 'pqr' and c_a.name = 'abc';
+
+Output:
+sdo_geom.relate(c_b.shape,'anyinteract',c_a.shape,0.005)
+--------------------------------------------------------
+
+true
+
+
+3) Find the areas of all direction locations.
+
+SQL>select name, sdo_geom.sdo_area(shape, 0.005) from university_15;
+
+Output:
+name                             sdo_geom.sdo_area(shape,0.005)
+-------------------------------- ------------------------------
+abc                                                       24
+pqr                                                     16.5
+mno                                                        5
+xyz                                               12.5663706
+
+4) Find the area of only one location abc.
+
+SQL>select c.name, sdo_geom.sdo_area(c.shape, 0.005) from university_15 c
+where c.name = 'abc';
+
+Output:
+name                             sdo_geom.sdo_area(c.shape,0.005)
+-------------------------------- --------------------------------
+abc                                                         24
+
+
+5) Find the distance between two geometries.  
+
+SQL>select sdo_geom.sdo_distance(c_b.shape, c_d.shape, 0.005)
+from university_15 c_b, university_15 c_d
+where c_b.name = 'pqr' and c_d.name = 'xyz';
+
+Output:
+sdo_geom.sdo_distance(c_b.shape,c_d.shape,0.005)
+------------------------------------------------
+                                      .846049894
+
+
+
+
+
+
+
+
+
+Pract9-B
+Title: Spatial Databases
+
+Question:  Create a spatial database that stores the number, name and location, which consists of different areas within the university campus including the main gate, the playground, the arts and science college buildings, the lad and print facility building. Fire the following queries. 
+1.	Display area for each object.
+2.	Find out the distance of the main gate from all other objects
+3.	Find the intersection area of lab and print facility 
+4.	Distance between arts and science building
+5.	Find the spatial relationship between canteen and print facility
+6.	Find the distance between college buildings and canteen. 
+
+Setup:
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+												
+								
+c			
+								
+			
+								
+			
+	
+	
+					d			
+				b								
+	a							
+
+		
+									e			
+						
+					
+			
+	g							
+			
+		
+	
+	f		
+												
+												
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Symbol	Area
+A	Main gate
+B	Playground
+C	Science building 
+D	Lab
+E	Print facility
+F	Canteen 
+G	Arts building
+
+Creating Table:
+
+SQL> create table university_151 (
+  2  mkt_id number primary key,
+  3  name varchar2(32),
+  4  shape_151 mdsys.sdo_geometry)
+  5  /
+
+table created.
+
+
+Insertion of values into the tables:
+Table Name: university_151 
+Format         : university_151(mkt_id, name,shape)
+
+
+
+
+
+
+SQL>insert into university_151 values(
+1,
+'main_gate',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,3), -- one rectangle (1003 =exterior)
+mdsys.sdo_ordinate_array(1,5,2,8) 
+-- only 2 points needed to
+-- define rectangle (lower left and upper right) with
+-- cartesian-coordinate data
+)
+)
+1 row created.
+
+SQL>insert into university_151 values(
+2,
+'canteen',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,3), -- one rectangle (1003 =exterior)
+mdsys.sdo_ordinate_array(9,1, 11,3) 
+-- only 2 points needed to
+-- define rectangle (lower left and upper right) with
+-- cartesian-coordinate data
+)
+)
+1 row created.
+
+SQL>insert into university_151 values(
+3,
+'arts_building',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,1), 
+--one polygon (exterior polygon ring)
+mdsys.sdo_ordinate_array(4,2, 7,2, 8,3, 7,4, 4,4, 4,2)
+)
+)
+1 row created.
+
+
+
+SQL>insert into university_151 values(
+4,
+'lab',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,3), -- one rectangle (1003 =exterior)
+mdsys.sdo_ordinate_array(8,6, 10,9) 
+-- only 2 points needed to
+-- define rectangle (lower left and upper right) with
+-- cartesian-coordinate data
+)
+)
+1 row created.
+
+
+
+SQL>insert into university_151 values(
+5,
+'print_facility',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,3), -- one rectangle (1003 =exterior)
+mdsys.sdo_ordinate_array(8,4, 10,7) 
+-- only 2 points needed to
+-- define rectangle (lower left and upper right) with
+-- cartesian-coordinate data
+)
+)
+1 row created.
+
+
+SQL>insert into university_151 values(
+6,
+'science_building',
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,
+null,
+mdsys.sdo_elem_info_array(1,1003,1), 
+-- one polygon (exterior polygon ring)
+mdsys.sdo_ordinate_array(8,10, 11,10, 11,13, 7,13, 8,11, 8,10)
+)
+)
+1 row created.
+SQL>insert into university_151 values(
+7,
+’playground’,
+mdsys.sdo_geometry(
+2003, -- 2-dimensional polygon
+null,null,mdsys.sdo_elem_info_array(1,1003,4), -- one circle
+mdsys.sdo_ordinate_array(5,5, 7,7, 5,9)
+)
+)
+1 row created.
+
+
+
+
+
+
+
+SQL>insert into user_sdo_geom_metadata values (
+’university_151’,
+’shape_151’,
+mdsys.sdo_dim_array( 
+mdsys.sdo_dim_element(’x’, 0, 20, 0.005),
+mdsys.sdo_dim_element(’y’, 0, 20, 0.005)
+),
+null -- srid
+)
+1 row created.
+
+
+Creating index:
+
+SQL>create index university_spatial_idx151
+on university_151(shape_151)
+indextype is mdsys.spatial_index;
+
+Index created.
+
+Firing queries on the created tables:
+
+1) Find the distance between two geometries:
+
+1.1 Distance between main gate and playground:
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'main_gate' and c_d.name = 'playground';
+
+
+
+
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                                       1
+
+
+1.2. Distance between main gate and canteen:
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'main_gate' and c_d.name = 'canteen';
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                              7.28010989
+
+1.3. Distance between main gate and arts building:
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'main_gate' and c_d.name = 'arts_building';
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                              2.23606798
+
+
+1.4.Distance between main gate and science building:
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'main_gate' and c_d.name = 'science_building';
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                              6.32455532
+
+1.5. Distance between main gate and lab:
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'main_gate' and c_d.name = 'lab';
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                                       6
+
+
+
+
+1.6. Distance between main gate and print facility:
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'main_gate' and c_d.name = 'print_facility';
+
+
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                                       6
+1.7. Distance between college buildings and canteen.
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'arts_building' and c_d.name = 'canteen';
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                                       1
+
+
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'science_building' and c_d.name = 'canteen';
+
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                                       7
+
+1.8. Distance between science and arts building 
+SQL>select sdo_geom.sdo_distance(c_b.shape_151, c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'arts_building' and c_d.name = 'science_building';
+
+Output:
+sdo_geom.sdo_distance(c_b.shape_151,c_d.shape_151,0.005)
+--------------------------------------------------------
+                                              6.08276253
+
+
+2)Find out the distance of the main gate from all other objects
+
+SQL>select sdo_geom.sdo_intersection(c_a.shape_151, c_c.shape_151, 0.005)
+from university_151 c_a, university_151 c_c
+where c_a.name = 'lab' and c_c.name = 'print_facility';
+
+
+Output:
+sdo_geom.sdo_intersection(c_a.shape_151,c_c.shape_151,0.005)(sdo_gtype, sdo_srid
+--------------------------------------------------------------------------------
+sdo_geometry(2003, null, null, sdo_elem_info_array(1, 1003, 1), sdo_ordinate_arr
+ay(8, 7, 8, 6, 10, 6, 10, 7, 8, 7))
+
+3)Find the intersection area of lab and print facility 
+
+3.1)Spatial relationship between lab and print facility:
+SQL>select sdo_geom.relate(c_b.shape_151, 'anyinteract', c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'lab' and c_d.name = 'print_facility';
+
+Output:
+sdo_geom.relate(c_b.shape_151,'anyinteract',c_d.shape_151,0.005)
+-----------------------------------------------------------
+true
+
+3.2) Spatial relationship between canteen and print_facility
+SQL>select sdo_geom.relate(c_b.shape_151, 'anyinteract', c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'canteen' and c_d.name = 'print_facility';
+
+Output:
+sdo_geom.relate(c_b.shape_151,'anyinteract',c_d.shape_151,0.005)
+----------------------------------------------------------------
+false
+
+4) To find if any spatial relationship exists between playground and print_facility:
+
+SQL>select sdo_geom.relate(c_b.shape_151, 'anyinteract', c_d.shape_151, 0.005)
+from university_151 c_b, university_151 c_d
+where c_b.name = 'playground' and c_d.name = 'print_facility';
+
+Output:
+sdo_geom.relate(c_b.shape_151,'anyinteract',c_d.shape_151,0.005)
+----------------------------------------------------------------
+false
+
+5) Return the areas of all different locations.
+
+SQL>select name, sdo_geom.sdo_area(shape_151, 0.005) from university_151;
+
+
+
+
+
+
+
+Output:
+name                             sdo_geom.sdo_area(shape_151,0.005)
+-------------------------------- ----------------------------------
+main_gate                                                        3
+canteen                                                             4
+arts_building                                                    7
+lab                                                                    6
+print_facility                                                    6
+science_building                                              10
+playground                                                       12.5663706
+
+6) Return the area of science_building:
+SQL>select c.name, sdo_geom.sdo_area(c.shape_151, 0.005) from university_151 c 
+where c.name = 'science_building';
+
+Output:
+name                             sdo_geom.sdo_area(c.shape_151,0.005)
+-------------------------------- ------------------------------------
+science_building                                                   10
+
+
+
+
+
+
+
+
+
