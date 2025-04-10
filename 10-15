@@ -1,1 +1,203 @@
 
+### PRACTICAL 10: Titanic Dataset Analysis
+
+# Load and explore the dataset
+library(readr)
+titanic <- read_csv("Titanic-Dataset.csv")
+head(titanic)
+str(titanic)
+summary(titanic)
+colSums(is.na(titanic))
+
+# Basic scatter plot: Age vs Fare
+ggplot(data = titanic, aes(x = Age, y = Fare)) +
+  geom_point() +
+  labs(title = "Scatter Plot of Age vs Fare", x = "Age", y = "Fare")
+
+# Color points by Pclass (convert to factor)
+titanic$Pclass <- as.factor(titanic$Pclass)
+ggplot(data = titanic, aes(x = Age, y = Fare, color = Pclass)) +
+  geom_point() +
+  labs(title = "Scatter Plot of Age vs Fare (Colored by Pclass)", x = "Age", y = "Fare")
+
+# Facet by Sex
+ggplot(data = titanic, aes(x = Age, y = Fare, color = Pclass)) +
+  geom_point() +
+  labs(title = "Scatter Plot of Age vs Fare (Colored by Pclass)", x = "Age", y = "Fare") +
+  facet_wrap(~Sex)
+
+# Facet + Theme
+ggplot(data = titanic, aes(x = Age, y = Fare, color = Pclass)) +
+  geom_point() +
+  labs(title = "Scatter Plot of Age vs Fare (Colored by Pclass)", x = "Age", y = "Fare") +
+  facet_wrap(~Sex) +
+  theme_dark()
+
+# Survivors by ticket class
+survived_passengers <- subset(titanic, Survived == 1)
+survivors_by_class <- aggregate(Survived ~ Pclass, data = survived_passengers, FUN = length)
+names(survivors_by_class) <- c("Pclass", "Survivors")
+
+ggplot(data = survivors_by_class, aes(x = Pclass, y = Survivors)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Passengers Who Survived by Ticket Class", x = "Ticket Class", y = "Number of Survivors")
+
+# Survivors by class and sex
+titanic$Sex <- as.factor(titanic$Sex)
+survivors_by_class_sex <- aggregate(Survived ~ Pclass + Sex, data = survived_passengers, FUN = length)
+names(survivors_by_class_sex) <- c("Pclass", "Sex", "Survivors")
+
+ggplot(data = survivors_by_class_sex, aes(x = Pclass, y = Survivors)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Passengers Who Survived by Ticket Class (Faceted by Sex)", x = "Ticket Class", y = "Number of Survivors") +
+  facet_wrap(~ Sex)
+
+# Age category
+library(dplyr)
+titanic <- titanic %>%
+  mutate(age_cat = case_when(
+    Age < 12 ~ "child",
+    Age >= 12 & Age <= 17 ~ "adolescent",
+    Age >= 18 ~ "adult",
+    TRUE ~ NA_character_
+  ))
+
+# Plot by age_cat, fill by Sex, facet by Pclass and Survived
+ggplot(titanic, aes(age_cat, fill = Sex)) + geom_bar() + facet_wrap(~Pclass)
+ggplot(titanic, aes(age_cat, fill = Sex)) + geom_bar() + facet_wrap(~Survived)
+
+
+
+
+
+
+
+
+### PRACTICAL 11: Circular Bar Plot
+
+library(tidyverse)
+library(ggplot2)
+
+# Create dataset
+data = data.frame(
+  index = seq(1,100),
+  label = paste("Data", seq(1,100), sep="= "),
+  values = sample(seq(10,100), 100, replace = TRUE)
+)
+
+# Circular bar plot
+ggplot(data, aes(x = as.factor(index), y = values)) +
+  geom_bar(stat = "identity", fill=alpha("green", 0.5)) +
+  ylim(-100,120) +
+  coord_polar(start = 0)
+
+
+### PRACTICAL 12: Lollipop Plot
+
+data2 <- data.frame(value1 = seq(1,30), value2 = abs(rnorm(30)))
+head(data2)
+
+ggplot(data2, aes(x = value1, y = value2)) +
+  geom_point(size = 5, color = "red", shape = 21, fill = "orange") +
+  geom_segment(aes(x = value1, xend = value1, y = 0, yend = value2))
+
+
+
+
+
+
+### PRACTICAL 13: qplot() with mpg Dataset
+
+library(ggplot2)
+str(mpg)
+
+# Scatterplot
+qplot(displ, hwy, data = mpg, color = drv)
+
+# Scatterplot with smooth line
+qplot(displ, hwy, data = mpg, color = drv, geom = c("point", "smooth"))
+
+# Faceted smooth
+qplot(displ, hwy, data = mpg, facets = . ~ drv) + geom_smooth()
+
+# Boxplot
+qplot(drv, hwy, data = mpg, geom = "boxplot")
+
+# Histogram faceted
+qplot(hwy, data = mpg, facets = drv ~ ., binwidth = 2)
+qplot(hwy, data = mpg, facets = . ~ drv, binwidth = 2)
+
+
+
+
+
+
+### PRACTICAL 14: Hierarchical Clustering
+
+library(dplyr)
+head(mtcars)
+
+# Distance matrix
+distance_mat <- dist(mtcars, method = 'euclidean')
+distance_mat
+
+# Hierarchical clustering
+set.seed(240)
+Hierar_cl <- hclust(distance_mat, method = "average")
+Hierar_cl
+
+# Dendrogram
+plot(Hierar_cl)
+abline(h = 110, col = "green")
+
+# Cut tree into 3 clusters
+fit <- cutree(Hierar_cl, k = 3)
+fit
+
+# Add rectangles to plot
+rect.hclust(Hierar_cl, k = 3, border = "green")
+
+
+
+
+
+
+### PRACTICAL 15: K-Means Clustering
+
+data(iris)
+str(iris)
+
+library(ClusterR)
+library(cluster)
+
+# Remove labels
+iris_1 <- iris[, -5]
+
+# Fit K-Means
+set.seed(240)
+kmeans.re <- kmeans(iris_1, centers = 3, nstart = 20)
+kmeans.re
+
+# Cluster labels
+kmeans.re$cluster
+
+# Confusion Matrix
+cm <- table(iris$Species, kmeans.re$cluster)
+cm
+
+# Basic plot
+plot(iris_1[c("Sepal.Length", "Sepal.Width")])
+plot(iris_1[c("Sepal.Length", "Sepal.Width")], col = kmeans.re$cluster)
+plot(iris_1[c("Sepal.Length", "Sepal.Width")], col = kmeans.re$cluster, main = "K-means with 3 clusters")
+
+# Cluster centers
+kmeans.re$centers
+kmeans.re$centers[, c("Sepal.Length", "Sepal.Width")]
+points(kmeans.re$centers[, c("Sepal.Length", "Sepal.Width")], col = 1:3, pch = 8, cex = 3)
+
+# Visualization
+y_kmeans <- kmeans.re$cluster
+clusplot(iris_1[, c("Sepal.Length", "Sepal.Width")], y_kmeans, 
+         lines = 0, shade = TRUE, color = TRUE, labels = 2,
+         plotchar = FALSE, span = TRUE, main = paste("Cluster iris"),
+         xlab = 'Sepal.Length', ylab = 'Sepal.Width')
