@@ -1,0 +1,618 @@
+Practical-1
+i.
+# Load required packages
+library(readxl)
+library(GGally)
+library(ggplot2)
+library(dplyr)
+
+# Load the dataset (make sure the .xls file is in the working directory)
+toyota_data <- read.csv("ToyotaCorolla.csv")
+
+# Quick look at column names
+colnames(toyota_data)
+
+# Select a subset of numeric variables for the matrix plot
+selected_vars <- select(toyota_data,price, age_08_04, km, hp, weight)
+
+# Matrix plot using GGally
+ggpairs(selected_vars)
+
+
+ii.
+a.
+These are non-numeric and need to be converted to dummy variables (binary 0/1 columns).
+
+b.
+
+dummy_vars <- model.matrix(~ fuel_type + metallic_rim - 1, data = toyota_data)
+
+# View first few rows
+head(dummy_vars)
+
+c.
+# Remove original categorical columns
+toyota_numeric <- select(toyota_data,-fuel_type, -metallic_rim)
+
+# Bind the dummy variables to the dataset
+toyota_prepared <- cbind(toyota_numeric, dummy_vars)
+
+# View the updated dataset
+head(toyota_prepared)
+
+
+Practical-2
+# Load necessary packages
+library(ggplot2)
+library(lubridate)
+library(dplyr)
+
+# Read the Excel file
+appliances <- read.csv("ApplianceShipments.csv")
+
+# View the data (assuming it has 'Quarter' and 'Shipments' columns)
+head(appliances)
+
+# Let's make sure the Quarter column is treated properly as a date
+# Assuming it's like "Q1-1985", "Q2-1985" etc.
+
+# Create a proper Date column
+appliances <- 
+  mutate(appliances,
+    Year = as.numeric(substr(Quarter, 4, 7)),
+    Qtr = substr(Quarter, 1, 2),
+    Month = case_when(
+      Qtr == "Q1" ~ 1,
+      Qtr == "Q2" ~ 4,
+      Qtr == "Q3" ~ 7,
+      Qtr == "Q4" ~ 10
+    ),
+    Date = make_date(Year, Month, 1)
+  )
+
+# Plotting the time series
+ggplot(appliances, aes(x = Date, y = Shipments)) +
+  geom_line(color = "blue", size = 1.2) +
+  labs(title = "Quarterly U.S. Household Appliance Shipments (1985â€“1989)",
+       x = "Quarter",
+       y = "Shipments (in million $)") +
+  theme_minimal() +
+  scale_x_date(date_labels = "%Y-Q%q", date_breaks = "3 months")
+
+i.
+appliances$Quarter_Name <- substr(appliances$Quarter, 1, 2)
+
+# Plot separate lines for each Quarter
+library(ggplot2)
+
+ggplot(appliances, aes(x = Date, y = Shipments, color = Quarter_Name)) +
+  geom_line(size = 1.2) +
+  labs(title = "Quarter-wise Appliance Shipments (Q1â€“Q4)",
+       x = "Year", y = "Shipments (Million $)",
+       color = "Quarter") +
+  theme_minimal() +
+  coord_cartesian(ylim = c(3500, 5000)) +
+  scale_x_date(date_labels = "%Y", date_breaks = "1 year")
+
+ii.
+# Aggregate total shipments by year
+yearly_totals <- appliances %>%
+  group_by(Year) %>%
+  summarise(Total_Shipments = sum(Shipments))
+
+# Plot yearly total
+ggplot(yearly_totals, aes(x = Year, y = Total_Shipments)) +
+  geom_line(color = "purple", size = 1.4) +
+  geom_point(size = 3) +
+  labs(title = "Yearly Total Appliance Shipments (1985â€“1989)",
+       x = "Year", y = "Total Shipments (Million $)") +
+  theme_minimal()
+
+
+iii.
+install.packages("plotly")
+library(plotly)
+
+# Interactive version of the quarterly plot
+plot_ly(appliances, x = ~Date, y = ~Shipments, type = 'scatter', mode = 'lines',
+        color = ~Quarter_Name,
+        line = list(width = 2)) %>%
+  layout(title = "Interactive Quarterly Appliance Shipments",
+         yaxis = list(title = "Shipments (Million $)", range = c(3500, 5000)),
+         xaxis = list(title = "Date"))
+
+#Yearly
+plot_ly(yearly_totals, x = ~Year, y = ~Total_Shipments, type = 'scatter', mode = 'lines+markers',
+        line = list(color = 'darkblue', width = 2)) %>%
+  layout(title = "Interactive Yearly Total Shipments",
+         yaxis = list(title = "Total Shipments (Million $)"),
+         xaxis = list(title = "Year"))
+
+iv.
+In Excel, plotting line graphs for each quarter required sorting data manually and creating multiple series. While Excel is intuitive for quick visualizations, it lacks interactivity and automation. In contrast, using R with Plotly provided a streamlined and reproducible process. I could transform, filter, and plot the data with minimal effort and achieve high-quality, interactive visualizations. Moreover, aggregating yearly totals and separating seasonal patterns was easier and visually more insightful in R. Both tools have their place: Excel is accessible for basic tasks, while R is powerful for advanced data mining and analytics.
+
+
+Practical-3
+i.
+car_data <- read.csv("ToyotaCorolla.csv")
+# See structure of dataset
+str(car_data)
+sapply(car_data, class)
+
+ii.
+In R (and Excel), a categorical variable with N unique values is transformed into (N - 1) binary dummy variables, each representing one category.
+This is called one-hot encoding, with one reference category omitted to avoid multicollinearity (aka the dummy variable trap).
+For example:
+Fuel Type = {Petrol, Diesel, CNG}
+Creates:
+Fuel_Diesel: 1 if Diesel, 0 otherwise
+Fuel_CNG: 1 if CNG, 0 otherwise
+â†’ If both are 0, then it must be Petrol (the reference category)
+
+iii.
+Answer: You need (N - 1) dummy variables for a categorical variable with N categories.
+The missing one is the baseline (reference).
+
+iv.
+# Convert to factor
+car_data$fuel_type <- as.factor(car_data$fuel_type)
+
+# Create dummy variables (using model.matrix)
+fuel_dummies <- model.matrix(~ fuel_type, data = car_data)[, -1]  # drop intercept
+
+# Bind back to main dataset
+car_data_dummies <- cbind(car_data, fuel_dummies)
+
+# Check first row for understanding
+head(car_data_dummies[, c("fuel_type", "fuel_typeDiesel", "fuel_typePetrol")], 1)
+
+
+
+v.
+# Select numeric variables (including dummies) for correlation
+numeric_data <- car_data_dummies[, sapply(car_data_dummies, is.numeric)]
+
+# Correlation matrix
+cor_matrix <- cor(numeric_data, use = "complete.obs")
+round(cor_matrix, 2)  # round for clarity
+
+# Load GGally for a matrix plot
+library(GGally)
+
+# Pick key variables: Price, Age, KM, HP, and dummies
+selected_vars <- car_data_dummies[, c("price", "age_08_04", "km", "hp", 
+                                      "fuel_typeDiesel", "fuel_typePetrol")]
+
+ggpairs(selected_vars)
+
+
+Practical-4
+housing.df <- read.csv("BostonHousing.csv") 
+set.seed(123) 
+train.index <- sample(row.names(housing.df), 
+0.6*dim(housing.df)[1])   
+valid.index <- setdiff(row.names(housing.df), train.index)   
+train.df <- housing.df[train.index, -14] 
+valid.df <- housing.df[valid.index, -14]
+i.
+# initialize normalized training, validation data, complete data frames to originals 
+train.norm.df <- train.df 
+valid.norm.df <- valid.df 
+
+housing.norm.df <-housing.df 
+# use preProcess() from the caret package to normalize Income and Lot_Size. 
+library(caret) 
+norm.values <- preProcess(train.df, method=c("center", 
+                                             "scale")) 
+train.norm.df <- as.data.frame(predict(norm.values, train.df)) 
+valid.norm.df <- as.data.frame(predict(norm.values, valid.df)) 
+housing.norm.df <- as.data.frame(predict(norm.values, 
+                                         housing.df)) 
+#initialize a data frame with two columns: k, and accuracy 
+accuracy.df <- data.frame(k = seq(1, 5, 1), RMSE = rep(0, 5)) 
+# compute knn for different k on validation. 
+for(i in 1:5){ 
+  knn.pred<-class::knn(train = train.norm.df[,-13],                           
+                       test = valid.norm.df[,-13],                           
+                       cl = train.df[,13], k = i) 
+  accuracy.df[i,2]<
+    RMSE(as.numeric(as.character(knn.pred)),valid.df[,13]) 
+} 
+accuracy.df
+
+
+Ans: k=1 is the best fit since it has the lowest RMSE (meaning 
+                                                       it has the highest accuracy rate of the values tried) However, 
+we do not want to use k=1 because of overfit so we will use the 
+next lowest RMSE (k=2). This means that, for a given record, 
+MEDV is predicted by averaging the MEDVs for the 2 closest 
+records, proximity being measured by the distance between the 
+vectors of predictor values.
+
+
+ii.
+new.norm.df <- predict(new.norm.values, newdata = new.df) 
+#predict the MEDV 
+new.knn.pred <- class::knn(train = train.norm.df[,-13], 
+test = new.norm.df, 
+cl = train.df$MEDV, k = 2) 
+new.knn.pred
+
+iii.
+
+iv.
+
+
+Practical-5
+accidents.df <- read.csv("accidentsFull.csv") 
+accidents.df$INJURY <- ifelse(accidents.df$MAX_SEV_IR>0, 
+"yes", "no") 
+head(accidents.df)
+
+i.
+#create a table based on INJURY 
+inj.tbl <- table(accidents.df$INJURY) 
+show(inj.tbl)
+#calculate probability of injury  
+inj.prob = scales::percent 
+(inj.tbl["yes"]/(inj.tbl["yes"]+inj.tbl["no"]),0.01) 
+inj.prob 
+Ans: Since ~51% of the accidents in our data set resulted 
+in an accident, we should predict that an accident will 
+result in injury because it is slightly more likely.
+
+ii.
+#convert your variables to categorical type 
+for (i in c(1:dim(accidents.df)[2])){ 
+accidents.df[,i] <- as.factor(accidents.df[,i]) 
+} 
+#create a new subset with only the required records 
+new.df <- accidents.df[1:12, 
+c("INJURY","WEATHER_R","TRAF_CON_R")] 
+new.df
+
+a.
+#Load library for pivot table 
+install.packages("rpivotTable")
+library(rpivotTable) 
+rpivotTable::rpivotTable(new.df)
+
+
+b.
+#To find P(Injury=yes|WEATHER_R = 1, TRAF_CON_R =0): 
+numerator1 <- 2/3 * 3/12 
+denominator1 <- 3/12 
+prob1 <- numerator1/denominator1 
+prob1 
+#To find P(Injury=yes|WEATHER_R = 1, TRAF_CON_R =1): 
+numerator2 <- 0 * 3/12 
+denominator2 <- 1/12 
+prob2 <- numerator2/denominator2 
+prob2 
+#To find P(Injury=yes| WEATHER_R = 1, TRAF_CON_R =2): 
+numerator3 <- 0 * 3/12 
+denominator3 <- 1/12 
+prob3 <- numerator3/denominator3 
+prob3
+#To find P(Injury=yes| WEATHER_R = 2, TRAF_CON_R =0): 
+numerator4 <- 1/3 * 3/12 
+denominator4 <- 6/12 
+prob4 <- numerator4/denominator4 
+prob4 
+#To find P(Injury=yes| WEATHER_R = 2, TRAF_CON_R =1): 
+numerator5 <- 0 * 3/12 
+denominator5 <- 1/12 
+prob5 <- numerator5/denominator5 
+prob5
+#To find P(Injury=yes| WEATHER_R = 2, TRAF_CON_R =2): 
+numerator6 <- 0 * 3/12 
+denominator6 <- 0 
+prob6 <- numerator6/denominator6 
+prob6 
+a<-c(1,2,3,4,5,6) 
+b<-c(prob1,prob2,prob3,prob4,prob5,prob6) 
+prob.df<-data.frame(a,b) 
+names(prob.df)<-c('Option #','Probability') 
+prob.df %>% mutate_if(is.numeric, round, 3)
+
+
+c.
+#add probability results to you subset 
+new.df.prob<-new.df 
+head(new.df.prob)
+prob.inj <- c(0.667, 0.167, 0, 0, 0.667, 0.167, 0.167, 0.667, 
+              0.167, 0.167,  
+              0.167, 0) 
+new.df.prob$PROB_INJURY<-prob.inj 
+#add a column for injury prediction based on a cutoff of 0.5 
+new.df.prob$PREDICT_PROB<ifelse(new.df.prob$PROB_INJURY>.5,"yes","no") 
+new.df.prob
+
+d.
+#To find P(Injury=yes| WEATHER_R = 1, TRAF_CON_R =1): 
+#  Probability of injury involved in accidents 
+#  =   (proportion of WEATHER_R =1 when Injury = yes)  
+#      *(proportion of TRAF_CON_R =1 when Injury = yes) 
+#      *(propotion of Injury = yes in all cases) 
+man.prob <- 2/3 * 0/3 * 3/12 
+man.prob 
+
+e.
+#load packages and run the naive Bayes classifier 
+library(e1071) 
+library(klaR) 
+library(caret) 
+library(ggplot2) 
+library(lattice) 
+## Loading required package: lattice 
+## Loading required package: ggplot2 
+nb<-naiveBayes(INJURY ~ ., data = new.df) 
+predict(nb, newdata = new.df,type = "raw")
+x=new.df[,-3] 
+y=new.df$INJURY 
+model <- train(x,y,'nb', trControl = trainControl(method =cv',number=10))
+model
+#Now that we have generated a classification model, we use it 
+for prediction 
+model.pred<-predict(model$finalModel,x) 
+model.pred
+##build a confusion matrix so that we can visualize the 
+classification errors 
+table(model.pred$class,y) 
+#compare against the manually calculated results 
+new.df.prob$PREDICT_PROB_NB<-model.pred$class 
+new.df.prob
+
+
+iii.
+library(e1071) 
+install.packages("klaR")
+install.packages("future")
+library(klaR) 
+library(caret) 
+library(ggplot2) 
+library(lattice)
+set.seed(22) 
+train.index <- sample(c(1:dim(accidents.df)[1]), 
+dim(accidents.df)[1]*0.6)   
+train.df <- accidents.df[train.index,] 
+valid.df <- accidents.df[-train.index,]
+
+a.
+We can use the predictors that describe the calendar time 
+or road 
+conditions: HOUR_I_R ALIGN_I WRK_ZONE WKDY_I_R INT
+ _HWY LGTCON_I_R PROFIL_I_R SPD_LIM SUR_CON TRAF
+ _CON_R TRAF_WAY WEATHER_R
+
+b.
+#define which variable you will be using 
+vars <- c("INJURY", "HOUR_I_R",  "ALIGN_I" ,"WRK_ZONE",  
+          "WKDY_I_R", 
+          "INT_HWY",  "LGTCON_I_R", "PROFIL_I_R", 
+          "SPD_LIM", "SUR_COND", 
+          "TRAF_CON_R",   "TRAF_WAY",   "WEATHER_R") 
+nbTotal <- naiveBayes(INJURY ~ ., data = train.df[,vars]) 
+#generate the confusion matrix using the train.df, the prediction and the classes 
+confusionMatrix(train.df$INJURY, predict(nbTotal, train.df[,vars]), positive = "yes")
+ner=1-.5384 
+nerp=scales::percent(ner,0.01) 
+nerp
+
+c.
+confusionMatrix(valid.df$INJURY, predict(nbTotal, valid.df[,vars]),positive = "yes") 
+ver=1-.5354 
+verp=scales::percent(ver,0.01) 
+paste("Overall Error: ",verp)
+
+
+d.
+imp=ver-ner 
+paste("The percent improvement is ",scales::percent(imp,0.01)) 
+options(digits = 2) 
+nbTotal 
+
+
+Practical-6
+# Practical 6
+
+# Q. Load and clean Toyota Corolla dataset
+Toyotacorolla <- read.csv("ToyotaCorolla.csv") 
+Toyotacorolla1 <- Toyotacorolla[, c(
+  "price", "age_08_04", "km", "fuel_type", "hp", "automatic",  
+  "doors", "quarterly_tax", "mfr_guarantee", "guarantee_period", 
+  "airco", "automatic_airco", "cd_player", "powered_windows",  
+  "sport_model", "tow_bar"
+)] 
+
+# Q. Convert categorical predictor to dummy variable
+install.packages("fastDummies")
+library(fastDummies) 
+Toyotacorolla2 <- Toyotacorolla1 %>%  
+  dummy_cols(select_columns = c('fuel_type')) 
+Toyotacorolla2
+
+# Q. Remove original Fuel_Type and one dummy to avoid multicollinearity
+Toyotacorolla3 <- Toyotacorolla2 %>%  
+  select(-fuel_type, -fuel_type_CNG) 
+Toyotacorolla3
+
+# Q. Remove NA values
+Toyotacorolla3[is.na(Toyotacorolla3)] <- 0 
+
+# Q. Normalize numerical variables (min-max scaling)
+library(caret) 
+data_normalize <- preProcess(Toyotacorolla3, method = c("range"), na.remove = TRUE) 
+data_normalize2 <- predict(data_normalize, as.data.frame(Toyotacorolla3)) 
+
+# Q. Split data into training (80%) and validation (20%)
+set.seed(123)
+ind <- sample(2, nrow(data_normalize2), replace = TRUE, prob = c(0.8, 0.2)) 
+tdata <- data_normalize2[ind == 1, ] 
+vdata <- data_normalize2[ind == 2, ] 
+
+# Q (a). Fit a neural network model - 1 hidden layer with 2 nodes
+install.packages("neuralnet")
+library(neuralnet) 
+nn <- neuralnet(data = tdata, price ~ ., hidden = 2) 
+plot(nn, rep = "best") 
+
+# Q. Calculate RMSE on training data
+install.packages("Metrics")
+library(Metrics) 
+pred <- compute(nn, tdata)$net.result 
+error <- rmse(tdata[, "price"], pred)  
+error  # Training RMSE
+
+# Q. Calculate RMSE on validation data
+nn <- neuralnet(data = vdata, price ~ ., hidden = 2) 
+plot(nn, rep = "best") 
+pred <- compute(nn, vdata)$net.result 
+error <- rmse(vdata[, "price"], pred)  
+error  # Validation RMSE
+
+# Q (b). Fit neural net model with 1 hidden layer, 5 nodes
+nn <- neuralnet(data = tdata, price ~ ., hidden = 5) 
+plot(nn, rep = "best") 
+pred <- compute(nn, tdata)$net.result 
+error <- rmse(tdata[, "price"], pred)  
+error  # Training RMSE
+
+nn <- neuralnet(data = vdata, price ~ ., hidden = 5) 
+plot(nn, rep = "best") 
+pred <- compute(nn, vdata)$net.result 
+error <- rmse(vdata[, "price"], pred)  
+error  # Validation RMSE
+
+# Q (c). Fit neural net with 2 hidden layers, 5 nodes each
+nn <- neuralnet(data = tdata, price ~ ., hidden = c(5, 5)) 
+plot(nn, rep = "best") 
+pred <- compute(nn, tdata)$net.result 
+error <- rmse(tdata[, "price"], pred)  
+error  # Training RMSE
+
+nn <- neuralnet(data = vdata, price ~ ., hidden = c(5, 5)) 
+plot(nn, rep = "best") 
+pred <- compute(nn, vdata)$net.result 
+error <- rmse(vdata[, "price"], pred)  
+error  # Validation RMSE
+
+# Q (i). What happens to RMSE on training data as layers/nodes increase?
+# Q (ii). What happens to RMSE on validation data?
+# Q (iii). Comment on the appropriate number of layers and nodes
+
+# 11.4 Direct Mailing to Airline Customers - Neural Network Classification
+
+# Q. Load EastWestAirlines data
+EastWestAirlinesNN <- read.csv("EastWestAirlines.csv") 
+EastWestAirlinesNN <- as.data.frame(EastWestAirlinesNN) 
+
+# Q. Remove NA values
+EastWestAirlinesNN[is.na(EastWestAirlinesNN)] <- 0 
+
+# Q. Convert categorical to dummy and scale numeric columns
+library(fastDummies)
+EastWestAirlinesNN <- dummy_cols(EastWestAirlinesNN)
+EastWestAirlinesNN <- EastWestAirlinesNN[, !grepl("^[A-Za-z_]*$", names(EastWestAirlinesNN)) | grepl("_", names(EastWestAirlinesNN))]
+
+library(caret)
+preproc <- preProcess(EastWestAirlinesNN, method = "range")
+norm_data <- predict(preproc, EastWestAirlinesNN)
+
+# Q. Split into training (75%) and validation (25%) sets
+library(caTools)
+set.seed(123)
+split <- sample.split(norm_data$Phone_Sale, SplitRatio = 0.75)
+train <- subset(norm_data, split == TRUE)
+valid <- subset(norm_data, split == FALSE)
+
+# Q (a). Train neural network with 1 hidden layer (5 nodes)
+nn_model <- neuralnet(Phone_Sale ~ ., data = train, hidden = 5, linear.output = FALSE)
+plot(nn_model)
+
+# Q. Predict on training and validation data
+train_pred <- compute(nn_model, train[, -which(names(train) == "Phone_Sale")])$net.result
+valid_pred <- compute(nn_model, valid[, -which(names(valid) == "Phone_Sale")])$net.result
+
+# Q. Generate decile-wise lift chart
+library(gains)
+gain_train <- gains(train$Phone_Sale, train_pred, groups = 10)
+gain_valid <- gains(valid$Phone_Sale, valid_pred, groups = 10)
+
+# Q. Plot decile-wise lift chart
+par(mfrow = c(1, 2))
+barplot(gain_train$mean.resp / mean(train$Phone_Sale), names.arg = gain_train$depth, xlab_
+
+Practical-7
+
+
+
+
+Practical 8
+library(readr ) 
+install.packages("forecast") 
+library(forecast) 
+wallmart <- read.csv("WMT.csv") 
+View(wallmart)  
+#Create a time plot of the differenced series. 
+library(stats) 
+closing_prices <- wallmart$Close 
+closing_prices
+diff_series <- diff(closing_prices) 
+diff_series
+png("acf_plot.png", width = 800, height = 600)
+acf(closing_prices, main = "Autocorrelation of Close Prices Series")
+dev.off()
+plot(diff_series, type = "l", xlab = "Time", ylab = "Differenced 
+Closing Prices",  main = "Time Plot of Differenced Series") 
+#II. Which of the following is/are relevant for testing whether 
+#a. The autocorrelations of the close prices series  
+acf(closing_prices, main = "Autocorrelation of Close Prices 
+Series") 
+#Significant autocorrelations at higher lags may indicate non
+#b. The AR(1) slope coefficient  
+closing_prices <- arima.sim(n=100, list(ar=0.7)) 
+ar_model <- arima(closing_prices, order = c(1, 0, 0)) 
+summary(ar_model) 
+Output: 
+Call:
+arima(x = closing_prices, order = c(1, 0, 0))
+
+Coefficients:
+         ar1  intercept
+      0.5367    -0.0812
+s.e.  0.0858     0.2096
+
+sigma^2 estimated as 0.9616:  log likelihood = -140.1,  aic = 286.21
+
+Training set error measures:
+                     ME      RMSE       MAE      MPE     MAPE      MASE       ACF1
+Training set 0.01064423 0.9805992 0.7823038 109.9737 125.8984 0.8871688 0.03589863
+
+Practical 9 
+Aim:Time plot in SouvenirSales.xlsx 
+
+  The file SouvenirSales.xls contains monthly sales for a 
+souvenir shop at a beach resort town in Queensland, Australia, 
+between 1995 and 2001. 
+Back in 2001, the store wanted to use the data to forecast sales 
+for the next 12 months (year 2002). They hired an analyst to 
+generate forecasts. The analyst first partitioned the data into 
+training and validation periods, with the validation period 
+containing the last 12 months of data (year 2001). She then fit a 
+forecasting model to sales, using the training period. 
+Partition the data into the training and validation periods as 
+explained above. 
+A. Why was the data partitioned? 
+  Partitioning the data allows the analyst to test the model 
+they have for accuracy. They can use a training set and 
+then test to it to their validation set. Once that has been 
+done, the analyst can look a number of error measures,  
+residuals, and comparison to see how accuate her model 
+may be at predicting future sales. 
+
+B. Why did the analyst choose a 12-month validation period? 
+  First and foremost, because she was asked to predict the 
+next 12 months of sales. To do this she needs to account 
+for a full period (one year) to account for any seasonality 
+of the data. And having the validation p
