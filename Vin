@@ -548,7 +548,7 @@ Practical-7
 
 
 
-Practical 8
+Practical-8
 library(readr ) 
 install.packages("forecast") 
 library(forecast) 
@@ -589,7 +589,7 @@ Training set error measures:
                      ME      RMSE       MAE      MPE     MAPE      MASE       ACF1
 Training set 0.01064423 0.9805992 0.7823038 109.9737 125.8984 0.8871688 0.03589863
 
-Practical 9 
+Practical-9 
 Aim:Time plot in SouvenirSales.xlsx 
 
   The file SouvenirSales.xls contains monthly sales for a 
