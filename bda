@@ -1,213 +1,520 @@
-BDA PRACTICAL NOTES (Consolidated)
+Pract1(part 1)
+SQL> connect scott/tiger@shadabdb;
+Connected.
+SQL> create table emp1(empid number(5),empname varchar2(20));
 
-------------------------------------------------------------
-Practical 2: Implement Pig Program using PySpark
-------------------------------------------------------------
-from pyspark.sql import SparkSession
-from pyspark.sql import Row
+Table created.
 
-spark = SparkSession.builder.appName("Implement Pig using PySpark").getOrCreate()
+SQL> insert into emp1 values(1,'shadab');
 
-data = [
-    Row(name="Madhav", age=30),
-    Row(name="Deepak", age=33),
-    Row(name="Akshay", age=35)
-]
+1 row created.
 
-df = spark.createDataFrame(data)
-df.show()
-df.filter(df.age > 30).show()
-df.groupBy("age").count().show()
+SQL> insert into emp1 values(2,'kotesh');
 
-spark.stop()
+1 row created.
 
-Explanation:
-Pig performs data manipulation like filtering, grouping, etc. In PySpark, similar operations are done using DataFrames and SQL functions.
+SQL> insert into emp1 values(3,'isaq');
 
-------------------------------------------------------------
-Practical 3: Implement Word Count Frequency Program using MapReduce
-------------------------------------------------------------
-from pyspark import SparkContext
+1 row created.
 
-sc = SparkContext("local", "WordCountExample")
-data = sc.textFile("data.txt")
+SQL> select *from emp1;
 
-wordCounts = data.flatMap(lambda line: line.split(" ")).map(lambda word: (word, 1)).reduceByKey(lambda a, b: a + b)
-for word, count in wordCounts.collect():
-    print(f"{word}: {count}")
+     EMPID EMPNAME
+---------- --------------------
+         1 shadab
+         2 kotesh
+         3 isaq
 
-sc.stop()
+SQL> commit;
 
-Explanation:
-Implements MapReduce in PySpark using flatMap, map, and reduceByKey transformations.
+Commit complete.
 
-------------------------------------------------------------
-Practical 4: Configure Hive and Implement Application in Hive
-------------------------------------------------------------
-from pyspark.sql import SparkSession
-from pyspark.sql import Row
+Pract1(part 2)
 
-spark = SparkSession.builder.appName("Hive with PySpark Example").enableHiveSupport().getOrCreate()
+SQL> connect scott/tiger@sahildb;
+Connected.
 
-data = [
-    Row(name="Madhav", age=30),
-    Row(name="Deepak", age=33),
-    Row(name="Akshay", age=35)
-]
+SQL> connect system;
+Enter password:
+Connected.
+SQL> grant all privileges to scott;
 
-df = spark.createDataFrame(data)
+Grant succeeded.
 
-spark.sql("CREATE DATABASE IF NOT EXISTS sample_db")
-spark.sql("USE sample_db")
+SQL> create database link sdb connect to scott identified by tiger using 'shadabdb';
 
-df.write.mode("overwrite").saveAsTable("people")
+Database link created.
 
-result = spark.sql("SELECT * FROM people")
-result.show()
+SQL>
+SQL> select * from emp1@sdb;
 
-spark.stop()
+     EMPID EMPNAME
+---------- --------------------
+         1 shadab
+         2 kotesh
+         3 isaq
 
-Explanation:
-Demonstrates Hive integration with Spark for creating databases, storing DataFrames, and querying tables using SQL.
 
-------------------------------------------------------------
-Practical 5: Implement Spark SQL
-------------------------------------------------------------
-from pyspark.sql import SparkSession
 
-spark = SparkSession.builder.appName("SparkSQLExample").getOrCreate()
-df = spark.read.csv("housing.csv", header=True, inferSchema=True)
-df.createOrReplaceTempView("housing")
 
-spark.sql("SELECT ocean_proximity, AVG(median_income) FROM housing GROUP BY ocean_proximity").show()
-spark.sql("SELECT * FROM housing WHERE median_house_value > 300000").show()
 
-spark.stop()
 
-Explanation:
-Demonstrates Spark SQL to analyze structured datasets using SQL queries.
 
-------------------------------------------------------------
-Practical 6: Implement Machine Learning in Spark
-------------------------------------------------------------
-a) Linear Regression
-from pyspark.ml.regression import LinearRegression
-from pyspark.sql import SparkSession
-from pyspark.ml.feature import VectorAssembler
 
-spark = SparkSession.builder.appName("LinearRegressionExample").getOrCreate()
-data = spark.read.csv("linear_regression_data.csv", header=True, inferSchema=True)
+Pract 2
 
-assembler = VectorAssembler(inputCols=["feature"], outputCol="features")
-data = assembler.transform(data)
 
-lr = LinearRegression(featuresCol="features", labelCol="label")
-model = lr.fit(data)
+## PRACTICAL NO.2
 
-print("Coefficients:", model.coefficients)
-print("Intercept:", model.intercept)
+# Connected to SQL DB
+C:\Users\admin>sqlplus / as sysdba;
 
-spark.stop()
+SQL*Plus: Release 11.2.0.1.0 Production on Mon Oct 6 11:08:40 2025
 
-b) Logistic Regression
-from pyspark.ml.classification import LogisticRegression
-from pyspark.sql import SparkSession
-from pyspark.ml.feature import VectorAssembler
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
 
-spark = SparkSession.builder.appName("LogisticRegressionExample").getOrCreate()
-data = spark.read.csv("logistic_regression_data.csv", header=True, inferSchema=True)
+Connected.
 
-assembler = VectorAssembler(inputCols=["feature1", "feature2"], outputCol="features")
-data = assembler.transform(data)
+# starting up
+SQL> STARTUP;
+ORACLE instance started.
 
-lr = LogisticRegression(featuresCol="features", labelCol="label")
-model = lr.fit(data)
 
-print("Coefficients:", model.coefficients)
-print("Intercept:", model.intercept)
+# shutting the oracle instance
+SQL> SHUTDOWN ABORT;
+ORACLE instance shut down.
 
-spark.stop()
+# starting up again (part of the process)
+SQL> STARTUP;
+ORACLE instance started.
 
-Explanation:
-Linear Regression predicts continuous values, Logistic Regression predicts binary outcomes.
+# Creating user
+SQL> CREATE USER HUSSAIN IDENTIFIED BY HUS;
 
-------------------------------------------------------------
-Practical 7: Implement Spark Streaming
-------------------------------------------------------------
-from pyspark.streaming import StreamingContext
-from pyspark import SparkContext
+User created.
 
-sc = SparkContext("local[2]", "NetworkWordCount")
-ssc = StreamingContext(sc, 5)
+# Verifying the presence of user in DB
+SQL> SELECT USERNAME FROM DBA_USERS;
 
-lines = ssc.socketTextStream("localhost", 9999)
-words = lines.flatMap(lambda line: line.split(" "))
-pairs = words.map(lambda word: (word, 1))
-wordCounts = pairs.reduceByKey(lambda a, b: a + b)
-wordCounts.pprint()
+# modify the user by its alias by HUS10
+SQL> ALTER USER HUSSAIN IDENTIFIED BY HUS10;
 
-ssc.start()
-ssc.awaitTermination()
+User altered.
 
-Explanation:
-Processes real-time streaming data using PySpark Streaming API.
+# repeate 
+SQL> SELECT USERNAME FROM DBA_USERS;
 
-------------------------------------------------------------
-Practical 8: Demonstrate Spark Shell Commands
-------------------------------------------------------------
-!pip install pyspark
+# drop user hussain from DB
+SQL> DROP USER HUSSAIN CASCADE;
 
-from pyspark.sql import SparkSession
-spark = SparkSession.builder.appName("SparkShellDemo").getOrCreate()
+User dropped.
 
-print("Spark version:", spark.version)
-print("App Name:", spark.sparkContext.appName)
-print("Master:", spark.sparkContext.master)
+# verifying the droped user from DB
+SQL> SELECT USERNAME FROM DBA_USERS;
 
-data = spark.sparkContext.textFile("data.txt")
-print("Total lines:", data.count())
 
-words = data.flatMap(lambda line: line.split(" "))
-wordCounts = words.map(lambda word: (word, 1)).reduceByKey(lambda a, b: a + b)
-for w in wordCounts.collect():
-    print(w)
 
-from pyspark.sql import Row
-df = spark.createDataFrame([
-    Row(id=1, name="Alice", age=23),
-    Row(id=2, name="Bob", age=25),
-    Row(id=3, name="Cathy", age=29)
-])
-df.show()
 
-df.createOrReplaceTempView("people")
-spark.sql("SELECT name FROM people WHERE age > 24").show()
 
-spark.stop()
 
-Explanation:
-Demonstrates Spark shell-like operations using RDDs, DataFrames, and SQL in PySpark.
 
-------------------------------------------------------------
-Practical 9: Implement Decision Tree
-------------------------------------------------------------
-from pyspark.ml.classification import DecisionTreeClassifier
-from pyspark.ml.feature import VectorAssembler
-from pyspark.sql import SparkSession
 
-spark = SparkSession.builder.appName("DecisionTreeExample").getOrCreate()
-data = spark.read.csv("decision_tree_data.csv", header=True, inferSchema=True)
 
-assembler = VectorAssembler(inputCols=["feature1", "feature2"], outputCol="features")
-data = assembler.transform(data)
+## PRACTICAL NO.3 (CREATE AND MANAGE DB USER ACCOUNT)
 
-dt = DecisionTreeClassifier(labelCol="label", featuresCol="features")
-model = dt.fit(data)
+# Connected to SQL DB
+C:\Users\admin>sqlplus / as sysdba;
 
-predictions = model.transform(data)
-predictions.select("features", "label", "prediction").show()
+SQL*Plus: Release 11.2.0.1.0 Production on Mon Oct 6 11:08:40 2025
 
-spark.stop()
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
 
-Explanation:
-Decision Tree algorithm classifies data based on features, used for predictive analytics.
+Connected.
+
+# CONNECTING TO SCOTT 
+SQL> CONNECT SYSTEM;
+Enter password:
+Connected.
+
+# GRANTING ALL ACCESS TO USER SCOTT
+SQL> GRANT ALL PRIVILEGES TO scott;
+
+Grant succeeded.
+
+
+# CREATING USER IN DB
+SQL> CREATE USER KAMAL IDENTIFIED BY KK;
+
+User created.
+
+# GIVING PERMISSION BY GRANTING SESSION TO KAMAL
+SQL> GRANT CREATE SESSION, CREATE TABLE TO KAMAL;
+
+Grant succeeded.
+
+SQL> SELECT USER FROM dual;
+
+USER
+------------------------------
+SYS
+
+# NOW CONNECTING TO KAMAL DB
+SQL> CONNECT KAMAL/KK;
+Connected.
+
+# CREATING TABLE IN KAMAL
+SQL> CREATE TABLE EMP1(EID NUMBER(5), ENAME VARCHAR2(20));
+
+# CONNECT TO SCOTT
+SQL> CONNECT scott/tiger;
+Connected.
+
+# CONNECTING TO SYSTEM 
+SQL> CONNECT SYSTEM;
+Enter password:
+Connected.
+
+# GRANTING ALL PERMISSION TO USER SCOTT
+SQL> GRANT ALL PRIVILEGES TO scott;
+
+Grant succeeded.
+
+# CREATING MANAGER ROLE INSIDE SCOTT
+SQL> CREATE ROLE manager_role;
+
+Role created.
+
+# GRANTING PERMISSION MANAGER ROLE FOR CREATING SESSION 
+SQL> GRANT CREATE SESSION, CREATE TABLE TO manager_role;
+
+Grant succeeded.
+
+# GIVING MANAGER ROLE TO KAMAL 
+SQL> GRANT manager_role TO KAMAL;
+
+Grant succeeded.
+
+# TAKING BACK THE MANAGER ROLE FROM KAMAL
+SQL> REVOKE manager_role FROM KAMAL;
+
+Revoke succeeded.
+
+# DROPPING THE MANAGER ROLE 
+SQL> DROP ROLE MANAGER_ROLE;
+
+Role dropped.
+
+
+SQL> ALTER PROFILE DEFAULT LIMIT PASSWORD_LIFE_TIME 90;
+
+Profile altered.
+
+# LOCKING USER (KAMAL)
+SQL> ALTER USER KAMAL ACCOUNT LOCK;
+
+User altered.
+
+# UNLOCKING THE USER (KAMAL)
+SQL> ALTER USER KAMAL ACCOUNT UNLOCK;
+
+User altered.
+
+
+
+
+
+
+
+Pract 4
+
+A)
+
+Sql>connect scott/tiger@orcl;
+
+>create table emp1(empid number primary key,first_name varchar2(10),last_name varchar2(10),hire_date date,salary number(10,2));
+
+>alter table emp1 add(email varchar2(10));
+
+>alter table emp1 modify(salary number(12,2));
+
+>drop table emp1:
+
+B)
+
+>create table emp1(empid number primary key,first_name varchar2(10),last_name varchar2(10),hire_date date,salary number(10,2));
+
+>create table dept1(dept_id number primary key,dept_name varchar2(20) unique,manager_id number,constraint fk_manager foreign key (manager_id) references employees(employee_id));
+
+>create table dept2(dept_id number primary key,dept_name varchar2(20),manager_id number
+
+>alter table dept2 add constraint pk_dept2 primary key(dept_id);
+
+>alter table dept2 add constraint uq_dept2 unique(dept_name);
+
+>desc emp1;
+
+>insert into emp1 values(1,'kk','dj','25-jun-2025',6000);
+
+#add more emp in this 3 to 4
+
+>selct * from emp1 where salary > 5000;
+
+>select first_name,salary from emp1;
+
+
+
+
+
+
+
+Prac 5
+
+A) Monitor and administer undo 
+
+SQL> SELECT name, value FROM v$parameter WHERE name LIKE 'undo%";
+
+SQL> SELECT
+2 	a.tablespace_name,
+3 	a.bytes / 1024 / 1024 AS size_mb,
+4 	b.bytes / 1024 / 1024 AS used_mb,
+5 	(a.bytes NVL(b.bytes,0)) / 1024 / 1024 AS free_mb
+6 FROM
+7 	dba_data_files a,
+8 	(SELECT SUM(bytes) bytes, file_id
+9 	FROM dba undo extents
+10 	WHERE status = 'ACTIVE'
+11 	GROUP BY file_id) b
+12 WHERE a.file_id=b.file_id(+)
+13 	AND a.tablespace_name IN (SELECT value FROM v$parameter WHERE name = 'undo_tablespace');
+
+SQL> SELECT
+	s.sid, 
+	s.serial#, 
+	t.used urec AS "Undo Records"
+	t.used_ublk AS "Undo Blocks",
+	s.username 
+FROM 
+	v$transaction t,
+	v$session s
+WHERE
+	t.ses_addr s.saddr;
+
+SQL> SELECT file_name FROM dba_data_files WHERE tablespace_name = 'UNDOTBS1';
+FILE_NAME
+C:\APP\SIES\ORADATA\ORCLDB2\UNDOTBS01.DBF
+SQL> ALTER DATABASE DATAFILE 'C:\APP\SIES\ORADATA\ORCLDB2\UNDOTBS01.DBF' RESIZE 200M;
+Database altered.
+
+B)Configure undo retention 
+
+SQL> ALTER SYSTEM SET undo_management = 'AUTO' SCOPE=SPFILE;
+SQL> SHOW PARAMETER undo_management;
+
+SQL> SHOW PARAMETER undo_retention;
+
+SQL> ALTER SYSTEM SET undo_retention = 1800 SCOPE=BOTH;
+System altered.
+
+SQL>SHOW PARAMETER undo_retention;
+
+
+
+
+
+
+Pract 6
+
+IN command shell
+
+
+>lsnrctl status LISTENER1
+
+>lsnrctl stop LISTENER1
+
+>lsnrctl start LISTENER1
+
+
+
+
+
+
+
+
+PRATICAL 7
+
+
+command shell
+
+C:\Users\admin>sqlplus / as sysdba
+
+
+SQL> select log_mode from v$database;
+
+LOG_MODE
+------------
+ARCHIVELOG
+
+SQL> alter database archivelog;
+
+Database altered.
+
+SQL> select log_mode from v$database;
+
+LOG_MODE
+------------
+ARCHIVELOG
+
+SQL> exit;
+
+command shell
+
+C:\Users\admin>mkdir C:\app\oracle\backup
+
+C:\Users\admin>rman target /
+
+
+RMAN> backup database format 'C:\app\oracle\backup\full_backup_%U';
+
+
+RMAN> backup incremental level 1 database format 'C:\app\oracle\backup\incremental_backup_%U';
+
+
+RMAN> backup archivelog all format 'C:\app\oracle\backup\arch_backup_%U';
+
+
+RMAN> backup ARCHIVELOG all format 'C:\app\oracle\backup\arch_backup_%U';
+
+
+RMAN> BACKUP ARCHIVELOG all format 'C:\app\oracle\backup\arch_backup_%U';
+
+
+
+RMAN>ctrl+C
+^C
+
+C:\Users\admin>sqlplus / as sysdba
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> select log_mode from v$database;
+
+LOG_MODE
+------------
+ARCHIVELOG
+
+SQL> alter database open;
+
+Database altered.
+
+SQL> exit;
+Disconnected from Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+C:\Users\admin>rman target /
+
+RMAN> BACKUP ARCHIVELOG all format 'C:\app\oracle\backup\arch_backup_%U';
+
+RMAN> BACKUP current controlfile format 'C:\app\oracle\backup\controlfile_backup_%U';
+
+RMAN> BACKUP spfile format 'C:\app\oracle\backup\spfile_%U.bkp';
+
+RMAN> BACKUP as compressed backupset database format 'C:\app\oracle\backup\compressed_full_backup_%U';
+
+RMAN> RESTORE ARCHIVELOG ALL VALIDATE;
+
+RMAN> BACKUP DATABASE PLUS ARCHIVELOG;
+
+RMAN>
+^C
+C:\Users\admin>sqlplus / as sysdba
+
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> BEGIN
+  2    DBMS_SCHEDULER.create_job (
+  3      job_name        => 'backup_job',
+  4      job_type        => 'EXECUTABLE',
+  5      job_action      => '/u01/app/oracle/backup/backup_database.rcv',
+  6      start_date      => SYSTIMESTAMP,
+  7      repeat_interval => 'FREQ=DAILY; BYHOUR=22; BYMINUTE=0',
+  8      enabled         => TRUE
+  9    );
+ 10  END;
+ 11  /
+
+PL/SQL procedure successfully completed.
+
+SQL>
+/
+
+
+
+
+
+
+
+Practical 8
+
+command shell
+C:\Users\admin>sqlplus / as sysdba
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> create tablespace mynewtablespace
+  2  DATAFILE 'C:\app\admin\oradata\oracle1\mynewdatafile.dbf' SIZE 100M
+  3  AUTOEXTEND ON NEXT 10M MAXSIZE 1G;
+
+Tablespace created.
+
+SQL> exit;
+
+
+command shell
+
+C:\Users\admin>cd C:\app\admin\oradata\oracle1
+
+C:\app\admin\oradata\oracle1>rman target /
+
+RMAN> backup database;
+
+RMAN>
+^C
+
+C:\app\admin\oradata\oracle1>sqlplus / as sysdba
+
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> connect scott/tiger as sysdba;
+Connected.
+SQL> SELECT file_name, tablespace_name
+  2  FROM dba_data_files
+  3  WHERE file_name LIKE '%MYNEWDATAFILE.DBF';
+
+SQL> Shutdown immediate;
+
+SQL> exit;
+
+command shell
+
+C:\app\admin\oradata\oracle1>cd C:\app\admin\oradata\oracle1
+
+C:\app\admin\oradata\oracle1>del MYNEWDATAFILE.DBF
+
+
+
+
+
+
+
+
+
