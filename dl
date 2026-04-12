@@ -1,4 +1,5 @@
-Practical - 1
+Practical - 1 eigen values 
+
 import numpy as np
 m=np.array([[1,2],[2,3]])
 print("Printing the Original Square array:\n",m)
@@ -7,6 +8,7 @@ eigen_values,eigen_vectors=np.linalg.eig(m)
 print("Printing the Eigen values of the given square array:\n",eigen_values)
 print()
 print("Printing the Eigen vectors of the given square array:\n",eigen_vectors)
+
 m=np.array([[1,2,3],[2,3,4],[4,5,6]])
 print("Printing the Original square array:\n",m)
 print()
@@ -14,12 +16,14 @@ eigen_values,eigen_vectors=np.linalg.eig(m)
 print("Printing the Eigen values of the given square array:\n",eigen_values)
 print()
 print("Printing the Eigen vectors of the given square array:\n",eigen_vectors)
+
 import tensorflow as tf
 e_matrix_A=tf.random.uniform([3,3],minval=1,maxval=10,dtype=tf.float32,name="matrixA")
 print("Printing the Matrix A:\n{}".format(e_matrix_A))
 print()
 eigen_values,eigen_vectors=tf.linalg.eigh(e_matrix_A)
 print("Eigen values:\n{}\n \nEigen vector:\n{}\n".format(eigen_vectors,eigen_values))
+
 e_matrix_A=tf.random.uniform([5,5],minval=1,maxval=10,dtype=tf.float32,name="matrixA")
 print("Printing the Matrix A:\n{}".format(e_matrix_A))
 print()
@@ -34,7 +38,8 @@ print("Eigen values:\n{}\n \nEigen vector:\n{}\n".format(eigen_vectors,eigen_val
 
 
 
-Practical - 2
+Practical - 2 xor using feed forward
+
 import numpy as np 
  
 def unitStep(v): 
@@ -93,7 +98,8 @@ print("XOR({}, {}) = {}".format(1,1,XOR_logicFunction(test4)))
 
 
 
-Practical - 3
+Practical - 3 basic neural network in tensorflow
+
 import tensorflow as tf 
 import numpy as np 
 import matplotlib.pyplot as plt 
@@ -182,7 +188,8 @@ plt.show()
 
 
 
-Practical - 4
+Practical - 4 convolution nn for digits recognition on mnist
+
 import numpy as np 
 import matplotlib.pyplot as plt 
 import tensorflow as tf 
@@ -262,7 +269,8 @@ plt.show()
 
 
 
-Practical - 5
+Practical - 5 RNN FOR TIME SERIES
+
 import tensorflow as tf 
 import numpy as np 
 import matplotlib.pyplot as plt 
@@ -417,7 +425,8 @@ plt.show()
 
 
 
-Practical - 6
+Practical - 6 LSTM FOR SENTIMENT ANALYSIS
+
 import tensorflow as tf 
 from tensorflow.keras.datasets import imdb 
 from tensorflow.keras.preprocessing.sequence import pad_sequences 
@@ -477,7 +486,7 @@ def decode_review(encoded):
 
 
 
-Practical - 7
+Practical - 7 ADVERSARIAL 
 
 
 import tensorflow as tf 
