@@ -250,17 +250,17 @@ print(seasonal_indices)
 
 
 
+
+
+
 #Practical-8 VARIATE DIFFERENCE METHOD
 
 import numpy as np
 def variate_difference_variance(data):
-"""
-Calculate the variance of a random component using the variate difference method.
-Parameters:
-data (list or numpy array): A sequence of observations.
-Returns:
-float: Estimated variance.
-"""
+
+
+
+
     n = len(data)
     if n < 2:
         raise ValueError("Data must contain at least two observations.")
