@@ -1,0 +1,87 @@
+Practical 05: Introduction to Flask
+
+Step 1: Open Project Folder in VS Code - Open VS Code - File → Open
+Folder → Select project folder (flask_basics)
+
+Step 2: Create Virtual Environment Command:
+ python -m venv venv
+
+Step 3: Activate Virtual Environment (Windows) Command: 
+venv\Scripts\activate
+
+Step 4: Install Flask Command: 
+pip install flask
+
+Step 5: Project Structure
+ flask_basics/ 
+│ 
+├── app.py 
+├── templates/ 
+│    └── index.html 
+└── venv/
+
+Step 6: Flask Application (app.py) :-
+
+from flask import Flask, render_template, request
+
+app = Flask(__name__)
+
+@app.route('/', methods=["GET", "POST"])
+def calculator():
+    result = None
+    if request.method == "POST":
+        num1 = float(request.form["num1"])
+        num2 = float(request.form["num2"])
+        operation = request.form["operation"]
+
+        if operation == "add":
+            result = num1 + num2
+        elif operation == "subtract":
+            result = num1 - num2
+        elif operation == "multiply":
+            result = num1 * num2
+        elif operation == "divide":
+            result = num1 / num2
+
+    return render_template("index.html", result=result)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+
+Step 7: HTML File (templates/index.html) 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Calculator</title>
+</head>
+<body>
+    <h2>Simple Flask Calculator</h2>
+
+    <form method="POST">
+        <input type="number" name="num1" step="any" required>
+        
+        <select name="operation">
+            <option value="add">+</option>
+            <option value="subtract">-</option>
+            <option value="multiply">*</option>
+            <option value="divide">/</option>
+        </select>
+        
+        <input type="number" name="num2" step="any" required>
+        
+        <button type="submit">Calculate</button>
+    </form>
+
+    {% if result is not none %}
+        <h3>Result: {{ result }}</h3>
+    {% endif %}
+</body>
+</html>
+
+Step 8: Run Flask App Command: 
+python app.py
+
+Step 9: Open in Browser http://127.0.0.1:5000
+
+Commands Summary: python -m venv venv venv pip install flask python
+app.py
