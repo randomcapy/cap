@@ -1,0 +1,81 @@
+Practical 07: Implement Kubernetes Commands
+
+Step 1: Start Kubernetes Cluster Location: Terminal Command:
+ minikube
+start
+
+Step 2: Verify Cluster Location: Terminal Command:
+ kubectl get nodes
+
+Step 3: Build Docker Image Location: Project Folder (where app.py and
+Dockerfile exist) Command:
+ docker build -t flaskapp:v1 .
+
+Step 4: Create deployments.yaml Location: Project Folder
+
+File name: deployments.yaml
+
+Content: 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flaskapp
+  template:
+    metadata:
+      labels:
+        app: flaskapp
+    spec:
+      containers:
+      - name: flaskapp
+        image: flaskapp:v1
+        ports:
+        - containerPort: 5000
+
+Step 5: Apply Deployment Location: Terminal (inside project folder)
+Command:
+ kubectl apply -f deployments.yaml
+
+Step 6: Check Deployment Location: Terminal Commands:
+ kubectl get deployments 
+
+ kubectl get pods
+
+Step 7: Expose Application Using Service Location: Terminal Command:
+kubectl expose deployment flask-deployment –type=NodePort –port=5000
+
+Step 8: Check Service Location: Terminal Command: kubectl get services
+
+Step 9: View Output Location: Terminal Command:
+ minikube service flask-deployment
+
+Output: Hello Version 1
+
+Step 10: Simulate CI/CD Update Location: app.py
+
+Change: return “Hello Version 1”
+
+To: return “Hello Version 2”
+
+Step 11: Build New Docker Image Location: Project Folder Command: docker build -t flaskapp:v2 .
+
+Step 12: Update deployments.yaml Location: Project Folder
+(deployments.yaml)
+
+Change: image: flaskapp:v1
+
+To: image: flaskapp:v2
+
+Step 13: Apply Updated Deployment Location: Terminal Command:
+ kubectl apply -f deployments.yaml
+
+Step 14: Verify Update Location: Terminal Command: 
+kubectl get pods
+
+Step 15: View Updated Output Location: Browser URL: http://<node-ip>:<node-port>
+
+Final Output: Hello Version 2
