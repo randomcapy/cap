@@ -1,0 +1,34 @@
+Practical 01: Create Virtual Machine in Local Environment
+
+Step 1: Create New Virtual Machine Location: VMware Workstation - Click
+Create a New Virtual Machine
+
+Step 2: Configuration Type Location: VMware Window - Select Typical
+(recommended) - Click Next
+
+Step 3: Guest Operating System Installation Location: VMware Window -
+Select Installer disc image file (ISO) - Select Ubuntu ISO file - Click
+Next
+
+Step 4: Easy Install Information Location: VMware Window - Enter
+Username - Enter Password - Click Next
+
+Step 5: Name the Virtual Machine Location: VMware Window - Virtual
+machine name: Ubuntu 64-bit - Choose location - Click Next
+
+Step 6: Specify Disk Capacity Location: VMware Window - Maximum disk
+size: 15 GB - Select Split virtual disk into multiple files - Click Next
+
+Step 7: Ready to Create Virtual Machine Location: VMware Window - Review
+configuration - Click Finish
+
+Step 8: Virtual Machine Creation Location: VMware Workstation - Virtual
+machine gets created - Installation starts automatically
+
+Step 9: Operating System Installation Location: VM Screen - Ubuntu
+installs automatically using Easy Install
+
+Step 10: Login to System Location: VM Screen - Enter username and
+password - Ubuntu desktop opens
+
+Final Output: Ubuntu Virtual Machine successfully created and running
