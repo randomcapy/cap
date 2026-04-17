@@ -1,0 +1,26 @@
+Practical 03: Configuring and Managing Virtual Machines in Azure
+
+Step 1: Open Azure Portal Location: Browser - Go to
+https://portal.azure.com - Sign in
+
+Step 2: Open Virtual Machines Location: Azure Portal - Click Virtual
+Machines - Select the created VM
+
+Step 3: Start Virtual Machine Location: Azure Portal - Click Start
+
+Step 4: Stop Virtual Machine Location: Azure Portal - Click Stop
+
+Step 5: Restart Virtual Machine Location: Azure Portal - Click Restart
+
+Step 6: Connect to Virtual Machine Location: Terminal Command: ssh @
+
+Step 7: Monitor Virtual Machine Location: Azure Portal - Go to
+Monitoring section - View CPU usage - View Network usage
+
+Step 8: Resize Virtual Machine Location: Azure Portal - Click Size -
+Select new VM size - Click Resize
+
+Step 9: Check Status Location: Azure Portal - View VM status (Running /
+Stopped)
+
+Output: Virtual Machine successfully configured and managed
