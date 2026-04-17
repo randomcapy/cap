@@ -1,0 +1,63 @@
+Practical 02: Introduction to Microsoft Azure
+
+  -----------------------------------------------------
+  Part A: Creating Virtual Machine using Azure Portal
+  -----------------------------------------------------
+
+Step 1: Open Azure Portal Location: Browser - Go to
+https://portal.azure.com - Sign in
+
+Step 2: Create Virtual Machine Location: Azure Portal - Click Virtual
+Machines - Click + Create → Virtual Machine
+
+Step 3: Basics Tab Location: Azure Portal - Select Subscription - Create
+/ Select Resource Group - Enter Virtual Machine Name - Select Region -
+Select Image (Ubuntu) - Select Size - Enter Username - Select Password
+authentication - Enter Password
+
+Step 4: Disks Tab Location: Azure Portal - Select OS Disk Type - Keep
+default settings - Click Next
+
+Step 5: Networking Tab Location: Azure Portal - Virtual Network: Default
+/ Create new - Subnet: Default - Public IP: Enabled - Select Allow
+selected ports - Select SSH (22)
+
+Step 6: Management Tab Location: Azure Portal - Keep default settings -
+Click Next
+
+Step 7: Monitoring Tab Location: Azure Portal - Keep default settings -
+Click Next
+
+Step 8: Advanced Tab Location: Azure Portal - Keep default settings -
+Click Next
+
+Step 9: Review + Create Location: Azure Portal - Click Review + Create -
+Click Create
+
+Step 10: Deployment Location: Azure Portal - Wait for deployment to
+complete
+
+Step 11: Connect to Virtual Machine Location: Terminal Command: ssh @
+
+Step 12: Login Location: Terminal - Enter password
+
+Output: Virtual Machine created and connected successfully
+
+  -------------------------------------------------
+  Part B: Creating Virtual Machine using Template
+  -------------------------------------------------
+
+Step 1: Open Template Location: Azure Portal - Go to Deploy a custom
+template
+
+Step 2: Edit Template Location: Azure Portal - View / edit JSON template
+
+Step 3: Custom Deployment Location: Azure Portal - Select Resource
+Group - Enter VM Name - Select Region - Enter Username and Password
+
+Step 4: Review + Create Location: Azure Portal - Click Review + Create -
+Click Create
+
+Step 5: Deployment Location: Azure Portal - Wait for deployment
+
+Output: Virtual Machine created using template
