@@ -45,6 +45,21 @@ Step 6: Check Deployment Location: Terminal Commands:
 
  kubectl get pods
 
+
+extra step for service -:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service
+spec:
+  type: NodePort
+  selector:
+    app: flaskapp
+  ports:
+    - port: 80
+      targetPort: 5000
+
 Step 7: Expose Application Using Service Location: Terminal Command:
 kubectl expose deployment flask-deployment –type=NodePort –port=5000
 
